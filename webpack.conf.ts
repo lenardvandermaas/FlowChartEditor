@@ -1,14 +1,3 @@
-module.exports = {
-  module: {
-    rules: [
-      {
-        test: /\.css$/i,
-        use: ["style-loader", "css-loader"],
-      },
-    ],
-  },
-};
-
 import * as webpack from 'webpack';
 import { CustomWebpackBrowserSchema, TargetOptions } from '@angular-builders/custom-webpack';
 
