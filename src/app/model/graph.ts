@@ -1,13 +1,18 @@
 // Holds a graph, a set of nodes and edges. No data here on how to layout nodes and edges
 
-export interface Graph {
+export interface GraphBase {
   getNodes(): readonly Node[]
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
   getEdgeByKey(id: string): Edge | undefined
 }
 
-export class ConcreteGraph implements Graph{
+export interface Graph extends GraphBase {
+  getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[]
+  getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[]
+}
+
+export class ConcreteGraphBase implements GraphBase {
   private nodes: Node[] = []
   private nodesById: Map<string, Node> = new Map()
   private edges: Edge[] = []
@@ -51,6 +56,52 @@ export class ConcreteGraph implements Graph{
     const edge = new ConcreteEdge(seq, from, to, text)
     this.edges.push(edge)
     this.edgesByKey.set(key, edge)
+  }
+}
+
+export class GraphConnectionseCacheDecorator implements Graph {
+  private startingFrom: Map<string, Edge[]>;
+  private leadingTo: Map<string, Edge[]>;
+
+  constructor(
+    private delegate: GraphBase
+  ) {
+    this.startingFrom = new Map<string, Edge[]>
+    this.leadingTo = new Map<string, Edge[]>
+    this.getNodes().forEach(node => {
+      this.startingFrom.set(node.getId(), [])
+      this.leadingTo.set(node.getId(), [])
+    })
+    this.getEdges().forEach(edge => {
+      const fromId = edge.getFrom().getId()
+      const toId = edge.getTo().getId()
+      this.startingFrom.get(fromId)!.push(edge)
+      this.leadingTo.get(toId)!.push(edge)
+    });
+  }
+
+  getNodes(): readonly Node[] {
+    return this.delegate.getNodes()
+  }
+
+  getNodeById(id: string): Node | undefined {
+    return this.delegate.getNodeById(id)
+  }
+
+  getEdges(): readonly Edge[] {
+    return this.delegate.getEdges()
+  }
+
+  getEdgeByKey(key: string): Edge | undefined {
+    return this.delegate.getEdgeByKey(key)
+  }
+
+  getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[] {
+    return this.startingFrom!.get(startNode.getId())!
+  }
+
+  getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[] {
+    return this.leadingTo!.get(endNode.getId())!
   }
 }
 
