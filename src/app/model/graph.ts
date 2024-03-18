@@ -1,9 +1,9 @@
 // Holds a graph, a set of nodes and edges. No data here on how to layout nodes and edges
 
 export interface Graph {
-  getNodes(): Node[]
+  getNodes(): readonly Node[]
   getNodeById(id: string): Node | undefined
-  getEdges(): Edge[]
+  getEdges(): readonly Edge[]
   getEdgeByKey(id: string): Edge | undefined
 }
 
@@ -13,7 +13,7 @@ export class ConcreteGraph implements Graph{
   private edges: Edge[] = []
   private edgesByKey: Map<string, Edge> = new Map()
 
-  getNodes(): Node[] {
+  getNodes(): readonly Node[] {
     return this.nodes
   }
 
@@ -21,7 +21,7 @@ export class ConcreteGraph implements Graph{
     return this.nodesById.get(id)
   }
 
-  getEdges(): Edge[] {
+  getEdges(): readonly Edge[] {
     return this.edges
   }
 
