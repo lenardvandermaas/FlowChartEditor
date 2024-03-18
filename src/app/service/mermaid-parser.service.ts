@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Graph } from '../model/graph'
+import { Graph, ConcreteGraph } from '../model/graph'
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +8,7 @@ export class MermaidParserService {
   constructor() { }
 
   getGraph(str: string): Graph {
-    const result = new Graph()
+    const result = new ConcreteGraph()
     const lines: string[] = str.split(/\r?\n/).map(line => line.trim());
     const nodeLines: string[] = lines.filter(line => line.search(/^[a-zA-Z0-9-]+\(/) === 0);
     const forwardLines: string[] = lines.filter(line => !(line.startsWith('classDef') || line.startsWith('linkStyle')) && line.search(/^[a-zA-Z0-9-]+ /) !== -1);
@@ -23,14 +23,14 @@ export class MermaidParserService {
       const toId = line.substring(line.lastIndexOf(' ') + 1);
       const firstPipeIndex = line.indexOf('|');
       const text = firstPipeIndex < 0 ? undefined : line.substring(firstPipeIndex + 1, line.lastIndexOf('|'))
-      if (! result.nodesById.has(fromId)) {
+      if (result.getNodeById(fromId) === undefined) {
         throw new Error(`Intended edge references unknown from node [${fromId}]`)
       }
-      const from = result.nodesById.get(fromId)!
-      if (! result.nodesById.has(toId)) {
+      const from = result.getNodeById(fromId)!
+      if (result.getNodeById(toId) === undefined) {
         throw new Error(`Intended edge references unknown to node [${toId}]`)
       }
-      const to = result.nodesById.get(toId)!
+      const to = result.getNodeById(toId)!
       result.connect(from, to, text)
     })
     return result
