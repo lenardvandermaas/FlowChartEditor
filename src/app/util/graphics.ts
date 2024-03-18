@@ -79,7 +79,6 @@ export class Line {
       return LineRelation.UNRELATED;
     }
     if ( Math.abs(second.x - first.x) < EPS) {
-      console.log('relateToHorizontalLine - hit case x-coords are similar')
       // The calculation would be numerically more precise if we do
       // this test also if first.x and second.x are not close.
       // But that way it is harder to make up test cases.
@@ -92,7 +91,6 @@ export class Line {
         return LineRelation.UNRELATED
       }
     }
-    console.log('relateToHorizontalLine - hit case x-coords are different')
     const startXWindow = Math.max(0, first.x); // Between 0 and refLength
     const endXWindow = Math.min(refLength, second.x); // Between refLenth and 0
     const relDistanceStart = (startXWindow - first.x) / (second.x - first.x);

@@ -56,12 +56,19 @@ describe('Line tests', () => {
     ['perpendicular cross top-down', new Line(new Point(2, 1), new Point(2, -1)), 3, LineRelation.CROSS]
   ].forEach(testCase => {
     let testTitle = `relate to horizontal line - ${testCase[0]}`
+    const refLength = testCase[2] as number
+    const expectedResult = testCase[3] as LineRelation
     it(testTitle, () => {
-      console.log(`Executing ${testTitle}`)
       const instance = testCase[1] as Line
-      const refLength = testCase[2] as number
-      const expectedResult = testCase[3] as LineRelation
       expect(instance.relateToHorizontalLine(refLength)).toBe(expectedResult)
+    })
+    let testTitleNotPerpendicular = `relate to horizontal line, not perpendicular - ${testCase[0]}`
+    it(testTitleNotPerpendicular, () => {
+      let originalLine = testCase[1] as Line
+      let originalLineStart = originalLine.startPoint
+      let newStart = originalLineStart.subtract(new Point(0.1, 0.1))
+      let newLine = new Line(newStart, originalLine.endPoint)
+      expect(newLine.relateToHorizontalLine(refLength)).toBe(expectedResult)
     })
   })
 
