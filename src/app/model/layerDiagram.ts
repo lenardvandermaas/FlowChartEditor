@@ -153,7 +153,7 @@ export class ConcreteLayerStructure implements LayerStructure {
 
   getInitialSequence(): NodeSequenceForLayerStructure {
     this.checkIsInitialized()
-    return new ConcreteNodeSequenceForLayerStructure(this)
+    return new ConcreteNodeSequence(this)
   }
 
   private checkIsInitialized() {
@@ -211,7 +211,7 @@ export class ConcreteLayerStructure implements LayerStructure {
   }
 }
 
-class ConcreteNodeSequenceForLayerStructure implements NodeSequenceForLayerStructure {
+class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
   private sequence: OptionalNode[]
   private omittedByLayer: Set<string>[]
 
