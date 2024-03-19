@@ -1,6 +1,7 @@
 // Holds a graph, a set of nodes and edges. No data here on how to layout nodes and edges
 
 export interface GraphBase {
+  // TODO: Make read-only again
   getNodes(): readonly Node[]
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
@@ -35,27 +36,55 @@ export class ConcreteGraphBase implements GraphBase {
   }
 
   addNode(id: string, text: string, style: string) {
-    if (this.nodesById.has(id)) {
-      throw new Error(`Graph already has node with id [${id}]`)
-    }
     if (id.includes('-')) {
       throw new Error(`Node id [${id}] is illegal because it contains '-'`)
     }
     const seq = this.nodes.length
     const node = new ConcreteNode(seq, id, text, style)
+    this.addExistingNode(node)
+  }
+
+  addExistingNode(node: Node) {
+    let id = node.getId()
+    if(this.nodesById.has(id)) {
+      throw new Error(`Cannot put node with id ${id} because this id is already present`)
+    }
     this.nodes.push(node)
     this.nodesById.set(id, node)
   }
 
+  _putReorderedNodesBack(newlyOrdered: Node[]) {
+    if (newlyOrdered.length != this.nodes.length) {
+      throw new Error(`_putReorderedNodesBack does not accept a node vector with a different length, old=${this.nodes.length}, new=${newlyOrdered.length}`)
+    }
+    this.nodes = newlyOrdered
+  }
+
   connect(from: Node, to: Node, text?: string) {
     const key = getEdgeKey(from, to);
-    if (this.edgesByKey.has(key)) {
-      throw new Error(`Graph cannot contain the same nodes multiple times, connection [${key}]`)
-    }
     const seq = this.edges.length
     const edge = new ConcreteEdge(seq, from, to, text)
-    this.edges.push(edge)
-    this.edgesByKey.set(key, edge)
+    this.addEdge(edge)
+  }
+
+  addEdge(existingEdge: Edge) {
+    this.checkEdgeRefersToExistingNodes(existingEdge)
+    let key: string = getEdgeKey(existingEdge.getFrom(), existingEdge.getTo())
+    if (this.edgesByKey.has(key)) {
+      throw new Error(`Cannot add existing edge with key ${key} because that connection is present already`)
+    }
+    this.edges.push(existingEdge)
+    this.edgesByKey.set(key, existingEdge)
+  }
+
+  private checkEdgeRefersToExistingNodes(edge: Edge) {
+    let key = getEdgeKey(edge.getFrom(), edge.getTo())
+    if (! this.nodesById.has(edge.getFrom().getId())) {
+      throw new Error("Illegal edge with key ${key} because referred from node is not in this graph")
+    }
+    if( ! this.nodesById.has(edge.getTo().getId())) {
+      throw new Error("Illegal edge with key ${key} because referred to node is not in this graph")
+    }
   }
 }
 
@@ -123,7 +152,7 @@ export class ConcreteNode implements Node {
   }
 }
 
-function getEdgeKey(from: Node, to: Node): string {
+export function getEdgeKey(from: Node, to: Node): string {
   return from.getId() + '-' + to.getId();
 }
 
