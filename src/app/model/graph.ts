@@ -1,7 +1,6 @@
 // Holds a graph, a set of nodes and edges. No data here on how to layout nodes and edges
 
 export interface GraphBase {
-  // TODO: Make read-only again
   getNodes(): readonly Node[]
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
@@ -168,6 +167,15 @@ export class ConcreteEdge implements Edge {
     readonly to: Node,
     readonly text?: string
   ) {}
+
+  static connectNodesWithDataFrom(nodeFrom: Node, nodeTo: Node, data: ConcreteEdge) {
+    return new ConcreteEdge(
+      data.seq,
+      nodeFrom,
+      nodeTo,
+      data.text
+    )
+  }
 
   getFrom(): Node {
     return this.from

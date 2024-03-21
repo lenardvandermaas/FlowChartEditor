@@ -8,12 +8,12 @@
 import { Node, Edge, GraphBase, ConcreteGraphBase, getEdgeKey } from './graph'
 import { getRange } from '../util/util'
 
-export interface LayerStructure extends GraphBase {
+export interface NodeSequenceEditorBase extends GraphBase {
   getNumLayers(): number
   getLayerOfPosition(position: number): number
   getLayerOfNode(node: Node): number
   getPositionsInLayer(layerNumber: number): number[]
-  getInitialSequence(): NodeSequenceForLayerStructure
+  buildEditor(): NodeSequenceEditor
 }
 
 export enum UpdateResponse {
@@ -24,8 +24,8 @@ export enum UpdateResponse {
 export type OptionalNode = Node | null
 export type OptionalEdge = Edge | null
 
-export interface NodeSequenceForLayerStructure {
-  getLayerStructure(): LayerStructure
+export interface NodeSequenceEditor {
+  getBase(): NodeSequenceEditorBase
   getSequence(): readonly OptionalNode[]
   getSequenceInLayer(layerNumber: number): readonly OptionalNode[]
   rotateToSwap(posFrom: number, posTo: number): UpdateResponse
@@ -33,10 +33,10 @@ export interface NodeSequenceForLayerStructure {
   reintroduceNode(position: number, node: Node): UpdateResponse
   getOrderedOmittedNodes(): readonly Node[]
   getOrderedOmittedNodesInLayer(layerNumber: number): readonly Node[]
-  getCell(positionFrom: number, positionTo: number): NodeSequenceCell
+  getCell(positionFrom: number, positionTo: number): NodeSequenceEditorCell
 }
 
-export interface NodeSequenceCell {
+export interface NodeSequenceEditorCell {
   getFromPosition(): number
   getToPosition(): number
   getLayerFrom(): number
@@ -63,7 +63,7 @@ class NodeOnLayer implements Node {
   }
 }
 
-export class ConcreteLayerStructure implements LayerStructure {
+export class ConcreteNodeSequenceEditorBase implements NodeSequenceEditorBase {
   // This is the graph that is shown to the user
   // that determines the sequence of the nodes.
   // This graph should hold intermediate nodes and
@@ -164,9 +164,9 @@ export class ConcreteLayerStructure implements LayerStructure {
     }
   }
 
-  getInitialSequence(): NodeSequenceForLayerStructure {
+  buildEditor(): NodeSequenceEditor {
     this.checkIsInitialized()
-    return new ConcreteNodeSequence(this)
+    return new ConcreteNodeSequenceEditor(this)
   }
 
   private checkIsInitialized() {
@@ -224,12 +224,12 @@ export class ConcreteLayerStructure implements LayerStructure {
   }
 }
 
-class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
+class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   private sequence: OptionalNode[]
   private omittedByLayer: Set<string>[]
 
   constructor(
-    private base: LayerStructure,
+    private base: NodeSequenceEditorBase,
   ) {
     // Copy the array
     this.sequence = [ ... base.getNodes()]
@@ -242,7 +242,7 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
     }
   }
 
-  getLayerStructure(): LayerStructure {
+  getBase(): NodeSequenceEditorBase {
     return this.base
   }
 
@@ -345,7 +345,7 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
     return result
   }
 
-  getCell(positionFrom: number, positionTo: number): NodeSequenceCell {
+  getCell(positionFrom: number, positionTo: number): NodeSequenceEditorCell {
     this.checkPosition(positionFrom)
     this.checkPosition(positionTo)
     const layerFrom = this.base.getLayerOfPosition(positionFrom)
@@ -375,7 +375,7 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
   }
 }
 
-class ConcreteNodeSequenceCell implements NodeSequenceCell {
+class ConcreteNodeSequenceCell implements NodeSequenceEditorCell {
   constructor(
     private fromPosition: number,
     private toPosition: number,
