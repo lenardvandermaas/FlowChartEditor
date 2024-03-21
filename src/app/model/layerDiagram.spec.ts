@@ -1,4 +1,4 @@
-import { ConcreteLayerStructure, LayerStructure, NodeSequenceForLayerStructure } from "./layerDiagram";
+import { ConcreteLayerStructure, LayerStructure, NodeSequenceForLayerStructure, UpdateResponse } from "./layerDiagram";
 import { ConcreteNode, Node, ConcreteEdge, Edge, getEdgeKey } from "../model/graph"
 
 function getLayerStructureToCheckOrdering(): ConcreteLayerStructure {
@@ -48,7 +48,8 @@ describe('ConcreteLayerStructure', () => {
     let instance = getLayerStructureToCheckOrdering()
     instance.init()
     expect(instance.getNodeById('1A')?.getId()).toBe('1A')
-    expect(instance.getNodeById('xxx')).toBeNull
+    // Do not use .toBeUndefined, because that does not check anything.
+    expect(instance.getNodeById('xxx')).toBe(undefined)
   })
 
   it('Get edges', () => {
@@ -62,7 +63,7 @@ describe('ConcreteLayerStructure', () => {
     let instance = getLayerStructureToCheckOrdering()
     instance.init()
     expect(instance.getEdgeByKey('1A-4C')?.getFrom().getId()).toEqual('1A')
-    expect(instance.getEdgeByKey('xxx')).toBeUndefined
+    expect(instance.getEdgeByKey('xxx')).toBe(undefined)
   })
 
   it('Member functions on layers', () => {
@@ -73,6 +74,8 @@ describe('ConcreteLayerStructure', () => {
     expect(instance.getPositionsInLayer(1)).toEqual([3, 4])
     expect([0, 1, 2, 3, 4].map(i => instance.getLayerOfPosition(i)))
       .toEqual([0, 0, 0, 1, 1])
+    expect(instance.getLayerOfNode(instance.getNodeById('1A')!)).toBe(0)
+    expect(instance.getLayerOfNode(instance.getNodeById('4C')!)).toBe(1)
   })
 })
 
@@ -98,6 +101,10 @@ describe('ConcreteNodeSequence', () => {
     base.init()
     const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
     expect(instance.getLayerStructure()).toEqual(base)
+    checkInitialState(instance)
+  })
+
+  function checkInitialState(instance: NodeSequenceForLayerStructure) {
     expect(instance.getSequence().map(n => n!.getId())).toEqual(['A', 'B', 'E', 'C', 'D'])
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['A', 'B', 'E'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
@@ -108,5 +115,195 @@ describe('ConcreteNodeSequence', () => {
     expect(cell03.getLayerTo()).toEqual(1)
     expect(cell03.getEdgeIfConnected()!.getFrom().getId()).toBe('A')
     expect(cell03.getEdgeIfConnected()!.getTo().getId()).toBe('C')
+    expect(instance.getOrderedOmittedNodes()).toEqual([])
+    expect(instance.getOrderedOmittedNodesInLayer(0)).toEqual([])
+    expect(instance.getOrderedOmittedNodesInLayer(1)).toEqual([])
+  }
+
+  it('Move node upward, rotating the nodes in between', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(0, 2)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['B', 'E', 'A'])
+    expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
+    expect(instance.getSequence().map(n => n!.getId())).toEqual(['B', 'E', 'A', 'C', 'D'])
+    expect(instance.getCell(2, 3).getEdgeIfConnected()!.getFrom().getId()).toBe('A')
+    expect(instance.getCell(2, 3).getEdgeIfConnected()!.getTo().getId()).toBe('C')
   })
+
+  it('Move node downward, rotating the nodes in between', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(2, 0)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['E', 'A', 'B'])
+    expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
+    expect(instance.getSequence().map(n => n!.getId())).toEqual(['E', 'A', 'B', 'C', 'D'])
+    expect(instance.getCell(1, 3).getEdgeIfConnected()!.getFrom().getId()).toBe('A')
+    expect(instance.getCell(1, 3).getEdgeIfConnected()!.getTo().getId()).toBe('C')
+  })
+
+  it('Move node up to swap with adjacent', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(3, 4)).toBe(UpdateResponse.ACCEPTED)
+    checkAfterSwapping(instance)
+  })
+
+  function checkAfterSwapping(instance: NodeSequenceForLayerStructure) {
+    expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['A', 'B', 'E'])
+    expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['D', 'C'])
+    expect(instance.getSequence().map(n => n!.getId())).toEqual(['A', 'B', 'E', 'D', 'C'])
+    expect(instance.getCell(0, 4).getEdgeIfConnected()!.getFrom().getId()).toBe('A')
+    expect(instance.getCell(0, 4).getEdgeIfConnected()!.getTo().getId()).toBe('C')
+  }
+
+  it('Move node down to swap with adjacent', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(4, 3)).toBe(UpdateResponse.ACCEPTED)
+    checkAfterSwapping(instance)
+  })
+
+  it('Omit node that is from node of edge', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    instance.omitNodeFrom(0)
+    checkStateAfterOmittingPositionZero(instance)
+  })
+
+  function checkStateAfterOmittingPositionZero(instance: NodeSequenceForLayerStructure) {
+    expect(instance.getSequence()[0]).toBe(null)
+    expect(instance.getSequence().slice(1, 5).map(n => n!.getId())).toEqual(['B', 'E', 'C', 'D'])
+    expect(instance.getSequenceInLayer(0)[0]).toBe(null)
+    expect(instance.getSequenceInLayer(0).length).toBe(3)
+    expect(instance.getSequenceInLayer(0).slice(1, 3).map(n => n!.getId())).toEqual(['B', 'E'])
+    expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
+    const cell03 = instance.getCell(0, 3)
+    expect(cell03.getFromPosition()).toBe(0)
+    expect(cell03.getToPosition()).toBe(3)
+    expect(cell03.getLayerFrom()).toBe(0)
+    expect(cell03.getLayerTo()).toBe(1)
+    expect(cell03.getEdgeIfConnected()).toBe(null)
+    expect(instance.getCell(1, 2).getEdgeIfConnected()).not.toBe(null)
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['A'])
+    expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['A'])
+    expect(instance.getOrderedOmittedNodesInLayer(1).length).toBe(0)
+  }
+
+  it('Omit node that is to node of edge', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    instance.omitNodeFrom(3)
+    const cell03 = instance.getCell(0, 3)
+    expect(cell03.getEdgeIfConnected()).toBe(null)
+  })
+
+  it('Check order of omitted nodes and reintroducing', () => {
+    const base: ConcreteLayerStructure = getLayerStructureToCheckOrdering()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    instance.omitNodeFrom(0)
+    instance.omitNodeFrom(1)
+    instance.omitNodeFrom(2)
+    instance.omitNodeFrom(3)
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['1A', '5B', '2E', '4C'])
+    expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['1A', '5B', '2E'])
+    expect(instance.reintroduceNode(0, instance.getLayerStructure().getNodeById('1A')!))
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['5B', '2E', '4C'])
+    expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['5B', '2E'])
+    expect(instance.getSequence()[0]!.getId()).toBe('1A')
+    // Rejected because position already filled and wrong layer
+    expect(instance.reintroduceNode(0, instance.getLayerStructure().getNodeById('4C')!)).toBe(UpdateResponse.REJECTED)
+    expect(instance.getCell(0, 3).getEdgeIfConnected()).toBe(null)
+    expect(instance.reintroduceNode(3, instance.getLayerStructure().getNodeById('4C')!)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.getCell(0, 3).getEdgeIfConnected()).not.toBe(null)
+  })
+
+  it('Check rotateToSwap swapping same node does nothing', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(0, 0)).toBe(UpdateResponse.ACCEPTED)
+    checkInitialState(instance)
+  })
+
+  it('Check rotateToSwap swapping nodes from different layers is rejected', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.rotateToSwap(0, 3)).toBe(UpdateResponse.REJECTED)
+    checkInitialState(instance)
+  })
+
+  it('Cannot reintroduce node at position that is filled', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
+    checkStateAfterOmittingPositionZero(instance)
+    const node: Node = instance.getLayerStructure().getNodeById('A')!
+    expect(node.getId()).toBe('A')
+    expect(instance.reintroduceNode(1, node)).toBe(UpdateResponse.REJECTED)
+    checkStateAfterOmittingPositionZero(instance)
+  })
+
+  it('Cannot duplicate node by reintroducing it in an empty spot', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
+    checkStateAfterOmittingPositionZero(instance)
+    expect(instance.reintroduceNode(0, instance.getSequence()[1]!)).toBe(UpdateResponse.REJECTED)
+    checkStateAfterOmittingPositionZero(instance)
+  })
+
+  it('Cannot reintroduce node that belongs to different layer', () => {
+    const base: ConcreteLayerStructure = getSimpleLayerStructure()
+    base.init()
+    const instance: NodeSequenceForLayerStructure = base.getInitialSequence()
+    expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.omitNodeFrom(3)).toBe(UpdateResponse.ACCEPTED)
+    checkStateAfterOmittingPositionsZeroAndThree(instance)
+    const node: Node = instance.getLayerStructure().getNodeById('A')!
+    expect(node.getId()).toBe('A')
+    expect(instance.reintroduceNode(3, node)).toBe(UpdateResponse.REJECTED)
+    checkStateAfterOmittingPositionsZeroAndThree(instance)
+  })
+
+  function checkStateAfterOmittingPositionsZeroAndThree(instance: NodeSequenceForLayerStructure) {
+    expect(instance.getSequence().length).toBe(5)
+    expect(instance.getSequence()[0]).toBe(null)
+    expect(instance.getSequence()[1]!.getId()).toBe('B')
+    expect(instance.getSequence()[2]!.getId()).toBe('E')
+    expect(instance.getSequence()[3]).toBe(null)
+    expect(instance.getSequence()[4]!.getId()).toBe('D')
+    expect(instance.getSequenceInLayer(0).length).toBe(3)
+    expect(instance.getSequenceInLayer(0)[0]).toBe(null)
+    expect(instance.getSequenceInLayer(0)[1]!.getId()).toBe('B')
+    expect(instance.getSequenceInLayer(0)[2]!.getId()).toBe('E')
+    expect(instance.getSequenceInLayer(1).length).toBe(2)
+    expect(instance.getSequenceInLayer(1)[0]).toBe(null)
+    expect(instance.getSequenceInLayer(1)[1]!.getId()).toBe('D')
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['A', 'C'])
+    expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['A'])
+    expect(instance.getOrderedOmittedNodesInLayer(1).map(n => n.getId())).toEqual(['C'])
+  }
 })
+
+/*
+  getLayerStructure(): LayerStructure
+  getSequence(): readonly OptionalNode[]
+  getSequenceInLayer(layerNumber: number): readonly OptionalNode[]
+  rotateToSwap(posFrom: number, posTo: number): UpdateResponse
+  omitNodeFrom(position: number): UpdateResponse
+  reintroduceNode(position: number, node: Node): UpdateResponse
+  getOrderedOmittedNodes(): readonly Node[]
+  getOrderedOmittedNodesInLayer(layerNumber: number): readonly Node[]
+  getCell(positionFrom: number, positionTo: number): NodeSequenceCell
+*/

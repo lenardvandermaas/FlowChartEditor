@@ -11,6 +11,7 @@ import { getRange } from '../util/util'
 export interface LayerStructure extends GraphBase {
   getNumLayers(): number
   getLayerOfPosition(position: number): number
+  getLayerOfNode(node: Node): number
   getPositionsInLayer(layerNumber: number): number[]
   getInitialSequence(): NodeSequenceForLayerStructure
 }
@@ -136,6 +137,18 @@ export class ConcreteLayerStructure implements LayerStructure {
     return (this.items.getNodes()[position] as NodeOnLayer).getLayer()
   }
 
+  // The node is probably not a NodeOnLayer
+  getLayerOfNode(node: Node): number {
+    const nodeOnLayer: NodeOnLayer | undefined = this.items.getNodeById(node.getId()) as NodeOnLayer
+    if (nodeOnLayer === undefined) {
+      throw new Error(`Incompatible node, ConcreteLayerStructure instance does not know node with id ${node.getId()}`)
+    }
+    if (nodeOnLayer.getLayer === undefined) {
+      throw new Error('Programming error, expected a NodeOnLayer in function ConcreteLayerStructure.getLayerOfNode')
+    }
+    return nodeOnLayer!.getLayer()
+  }
+
   addEdge(edge: Edge) {
     this.checkNotInitialized()
     this.items.addEdge(edge)
@@ -220,7 +233,13 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
   ) {
     // Copy the array
     this.sequence = [ ... base.getNodes()]
-    this.omittedByLayer = Array(base.getNumLayers()).fill(new Set<string>());
+    this.omittedByLayer = []
+    // Do not use Array(...).fill(...), because that would
+    // assign the same set for each layer. Omitting a node
+    // from one layer would omit it secretly from all others as well
+    for(let i = 0; i < base.getNumLayers(); ++i) {
+      this.omittedByLayer.push(new Set<string>())
+    }
   }
 
   getLayerStructure(): LayerStructure {
@@ -256,11 +275,11 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
 
   private rotate(posFrom: number, posTo: number) {
     if (posFrom < posTo) {
-      for (let index = posTo; index > posFrom; --index) {
+      for (let index = posFrom + 1; index <= posTo; ++index) {
         this.sequence[index - 1] = this.sequence[index]
       }  
     } else if (posFrom > posTo) {
-      for(let index = posTo; index < posFrom; ++index) {
+      for(let index = posFrom - 1; index >= posTo; --index) {
         this.sequence[index + 1] = this.sequence[index]
       }  
     }
@@ -290,9 +309,12 @@ class ConcreteNodeSequence implements NodeSequenceForLayerStructure {
       // Destination spot is not empty
       return UpdateResponse.REJECTED
     }
+    if (this.base.getLayerOfNode(node) !== layerNumber) {
+      // Trying to reintroduce a node that lives in another layer
+      return UpdateResponse.REJECTED
+    }
     if (! this.omittedByLayer[layerNumber].has(node.getId())) {
-      // Node to reintroduce is in already,
-      // or the node belongs to another layer.
+      // Node to reintroduce is in already.
       return UpdateResponse.REJECTED
     }
     this.sequence[position] = node
