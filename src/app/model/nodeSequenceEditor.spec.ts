@@ -1,20 +1,23 @@
-import { ConcreteNodeSequenceEditorBase, NodeSequenceEditorBase, NodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
-import { ConcreteNode, Node, ConcreteEdge, Edge, getEdgeKey } from "./graph"
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
+import { ConcreteNode, Node, ConcreteEdge, Edge, getEdgeKey, ConcreteGraphBase  } from "./graph"
 
-function getBaseToCheckOrdering(): ConcreteNodeSequenceEditorBase {
-  const instance = new ConcreteNodeSequenceEditorBase()
-  instance.newLayer()
-  // The digids are in the ids to check that sorting
-  // is not done alphabetically
-  instance.newPosition(0, newTestNode('1A'))
-  instance.newPosition(0, newTestNode('5B'))
-  instance.newLayer()
-  instance.newPosition(1, newTestNode('4C'))
-  instance.newPosition(1, newTestNode('3D'))
-  instance.newPosition(0, newTestNode('2E'))
-  instance.addEdge(newEdge(instance.getNodeById('1A')!, instance.getNodeById('4C')!))
-  instance.addEdge(newEdge(instance.getNodeById('5B')!, instance.getNodeById('2E')!))
-  return instance
+function getBaseToCheckOrdering(): ConcreteNodeSequenceEditor {
+  const g = new ConcreteGraphBase()
+  g.addExistingNode(newTestNode('1A'))
+  g.addExistingNode(newTestNode('5B'))
+  g.addExistingNode(newTestNode('4C'))
+  g.addExistingNode(newTestNode('3D'))
+  g.addExistingNode(newTestNode('2E'))
+  g.addEdge(newEdge(g.getNodeById('1A')!, g.getNodeById('4C')!))
+  g.addEdge(newEdge(g.getNodeById('5B')!, g.getNodeById('2E')!))
+  const m = new Map<string, number>([
+    ['1A', 0],
+    ['5B', 0],
+    ['4C', 1],
+    ['3D', 1],
+    ['2E', 0]
+  ])
+  return new ConcreteNodeSequenceEditor(g, m)
 }
 
 function newTestNode(id: string): Node {
@@ -26,81 +29,47 @@ function newEdge(nodeFrom: Node, nodeTo: Node): Edge {
 }
 
 describe('NodeSequenceEditorBase', () => {
-  it('Cannot get nodes if not initialized - that would be confusing because order is changed on init()', () => {
-    let caught = false
-    try {
-      getBaseToCheckOrdering().getNodes()
-    } catch(e) {
-      caught = true
-    }
-    expect(caught).toBe(true)
-  })
-
   it('Nodes are ordered by layer, within layer order is preserved', () => {
     let instance = getBaseToCheckOrdering()
-    instance.init()
-    const newOrder = instance.getNodes()
-    const theIds = newOrder.map(n => n.getId())
+    const newOrder = instance.getSequence()
+    const theIds = newOrder.map(n => n!.getId())
     expect(theIds).toEqual(['1A', '5B', '2E', '4C', '3D'])
-  })
-
-  it('Get node by id', () => {
-    let instance = getBaseToCheckOrdering()
-    instance.init()
-    expect(instance.getNodeById('1A')?.getId()).toBe('1A')
-    // Do not use .toBeUndefined, because that does not check anything.
-    expect(instance.getNodeById('xxx')).toBe(undefined)
-  })
-
-  it('Get edges', () => {
-    let instance = getBaseToCheckOrdering()
-    instance.init()
-    expect(instance.getEdges().map(edge => getEdgeKey(edge.getFrom(), edge.getTo())))
-      .toEqual(['1A-4C', '5B-2E'])
-  })
-
-  it('Get edge by key', () => {
-    let instance = getBaseToCheckOrdering()
-    instance.init()
-    expect(instance.getEdgeByKey('1A-4C')?.getFrom().getId()).toEqual('1A')
-    expect(instance.getEdgeByKey('xxx')).toBe(undefined)
   })
 
   it('Member functions on layers', () => {
     let instance = getBaseToCheckOrdering()
-    instance.init()
     expect(instance.getNumLayers()).toBe(2)
     expect(instance.getPositionsInLayer(0)).toEqual([0, 1, 2])
     expect(instance.getPositionsInLayer(1)).toEqual([3, 4])
     expect([0, 1, 2, 3, 4].map(i => instance.getLayerOfPosition(i)))
       .toEqual([0, 0, 0, 1, 1])
-    expect(instance.getLayerOfNode(instance.getNodeById('1A')!)).toBe(0)
-    expect(instance.getLayerOfNode(instance.getNodeById('4C')!)).toBe(1)
+    expect(instance.getLayerOfNode(instance.graph.getNodeById('1A')!)).toBe(0)
+    expect(instance.getLayerOfNode(instance.graph.getNodeById('4C')!)).toBe(1)
   })
 })
 
-function getSimpleLayerStructure(): ConcreteNodeSequenceEditorBase {
-  const instance = new ConcreteNodeSequenceEditorBase()
-  instance.newLayer()
-  // The digids are in the ids to check that sorting
-  // is not done alphabetically
-  instance.newPosition(0, newTestNode('A'))
-  instance.newPosition(0, newTestNode('B'))
-  instance.newLayer()
-  instance.newPosition(1, newTestNode('C'))
-  instance.newPosition(1, newTestNode('D'))
-  instance.newPosition(0, newTestNode('E'))
-  instance.addEdge(newEdge(instance.getNodeById('A')!, instance.getNodeById('C')!))
-  instance.addEdge(newEdge(instance.getNodeById('B')!, instance.getNodeById('E')!))
-  return instance
+function getSimpleLayerStructure(): ConcreteNodeSequenceEditor {
+  const g = new ConcreteGraphBase()
+  g.addExistingNode(newTestNode('A'))
+  g.addExistingNode(newTestNode('B'))
+  g.addExistingNode(newTestNode('C'))
+  g.addExistingNode(newTestNode('D'))
+  g.addExistingNode(newTestNode('E'))
+  g.addEdge(newEdge(g.getNodeById('A')!, g.getNodeById('C')!))
+  g.addEdge(newEdge(g.getNodeById('B')!, g.getNodeById('E')!))
+  const m = new Map<string, number>([
+    ['A', 0],
+    ['B', 0],
+    ['C', 1],
+    ['D', 1],
+    ['E', 0]
+  ])
+  return new ConcreteNodeSequenceEditor(g, m)
 }
 
 describe('NodeSequenceEditor', () => {
   it('Check properly initialized', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
-    expect(instance.getBase()).toEqual(base)
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     checkInitialState(instance)
   })
 
@@ -121,9 +90,7 @@ describe('NodeSequenceEditor', () => {
   }
 
   it('Move node upward, rotating the nodes in between', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(0, 2)).toBe(UpdateResponse.ACCEPTED)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['B', 'E', 'A'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
@@ -133,9 +100,7 @@ describe('NodeSequenceEditor', () => {
   })
 
   it('Move node downward, rotating the nodes in between', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(2, 0)).toBe(UpdateResponse.ACCEPTED)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['E', 'A', 'B'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
@@ -145,9 +110,7 @@ describe('NodeSequenceEditor', () => {
   })
 
   it('Move node up to swap with adjacent', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(3, 4)).toBe(UpdateResponse.ACCEPTED)
     checkAfterSwapping(instance)
   })
@@ -161,17 +124,13 @@ describe('NodeSequenceEditor', () => {
   }
 
   it('Move node down to swap with adjacent', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(4, 3)).toBe(UpdateResponse.ACCEPTED)
     checkAfterSwapping(instance)
   })
 
   it('Omit node that is from node of edge', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     instance.omitNodeFrom(0)
     checkStateAfterOmittingPositionZero(instance)
   })
@@ -196,67 +155,58 @@ describe('NodeSequenceEditor', () => {
   }
 
   it('Omit node that is to node of edge', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     instance.omitNodeFrom(3)
     const cell03 = instance.getCell(0, 3)
     expect(cell03.getEdgeIfConnected()).toBe(null)
   })
 
   it('Check order of omitted nodes and reintroducing', () => {
-    const base: ConcreteNodeSequenceEditorBase = getBaseToCheckOrdering()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    console.log('Check order of omitted nodes and reintroducing')
+    const instance: ConcreteNodeSequenceEditor = getBaseToCheckOrdering()
     instance.omitNodeFrom(0)
     instance.omitNodeFrom(1)
     instance.omitNodeFrom(2)
     instance.omitNodeFrom(3)
-    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['1A', '5B', '2E', '4C'])
+    console.log('All nodes omitted')
+    // Omitted nodes are not in the editor, use their original order
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['1A', '5B', '4C', '2E'])
     expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['1A', '5B', '2E'])
-    expect(instance.reintroduceNode(0, instance.getBase().getNodeById('1A')!))
-    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['5B', '2E', '4C'])
+    expect(instance.reintroduceNode(0, instance.graph.getNodeById('1A')!))
+    expect(instance.getOrderedOmittedNodes().map(n => n.getId())).toEqual(['5B', '4C', '2E'])
     expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['5B', '2E'])
     expect(instance.getSequence()[0]!.getId()).toBe('1A')
     // Rejected because position already filled and wrong layer
-    expect(instance.reintroduceNode(0, instance.getBase().getNodeById('4C')!)).toBe(UpdateResponse.REJECTED)
+    expect(instance.reintroduceNode(0, instance.graph.getNodeById('4C')!)).toBe(UpdateResponse.REJECTED)
     expect(instance.getCell(0, 3).getEdgeIfConnected()).toBe(null)
-    expect(instance.reintroduceNode(3, instance.getBase().getNodeById('4C')!)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.reintroduceNode(3, instance.graph.getNodeById('4C')!)).toBe(UpdateResponse.ACCEPTED)
     expect(instance.getCell(0, 3).getEdgeIfConnected()).not.toBe(null)
   })
 
   it('Check rotateToSwap swapping same node does nothing', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(0, 0)).toBe(UpdateResponse.ACCEPTED)
     checkInitialState(instance)
   })
 
   it('Check rotateToSwap swapping nodes from different layers is rejected', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.rotateToSwap(0, 3)).toBe(UpdateResponse.REJECTED)
     checkInitialState(instance)
   })
 
   it('Cannot reintroduce node at position that is filled', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
     checkStateAfterOmittingPositionZero(instance)
-    const node: Node = instance.getBase().getNodeById('A')!
+    const node: Node = instance.graph.getNodeById('A')!
     expect(node.getId()).toBe('A')
     expect(instance.reintroduceNode(1, node)).toBe(UpdateResponse.REJECTED)
     checkStateAfterOmittingPositionZero(instance)
   })
 
   it('Cannot duplicate node by reintroducing it in an empty spot', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
     checkStateAfterOmittingPositionZero(instance)
     expect(instance.reintroduceNode(0, instance.getSequence()[1]!)).toBe(UpdateResponse.REJECTED)
@@ -264,13 +214,11 @@ describe('NodeSequenceEditor', () => {
   })
 
   it('Cannot reintroduce node that belongs to different layer', () => {
-    const base: ConcreteNodeSequenceEditorBase = getSimpleLayerStructure()
-    base.init()
-    const instance: NodeSequenceEditor = base.buildEditor()
+    const instance: ConcreteNodeSequenceEditor = getSimpleLayerStructure()
     expect(instance.omitNodeFrom(0)).toBe(UpdateResponse.ACCEPTED)
     expect(instance.omitNodeFrom(3)).toBe(UpdateResponse.ACCEPTED)
     checkStateAfterOmittingPositionsZeroAndThree(instance)
-    const node: Node = instance.getBase().getNodeById('A')!
+    const node: Node = instance.graph.getNodeById('A')!
     expect(node.getId()).toBe('A')
     expect(instance.reintroduceNode(3, node)).toBe(UpdateResponse.REJECTED)
     checkStateAfterOmittingPositionsZeroAndThree(instance)

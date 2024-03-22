@@ -8,24 +8,20 @@
 import { Node, Edge, GraphBase, ConcreteGraphBase, getEdgeKey } from './graph'
 import { getRange } from '../util/util'
 
-export interface NodeSequenceEditorBase extends GraphBase {
-  getNumLayers(): number
-  getLayerOfPosition(position: number): number
-  getLayerOfNode(node: Node): number
-  getPositionsInLayer(layerNumber: number): number[]
-  buildEditor(): NodeSequenceEditor
-}
-
 export enum UpdateResponse {
   ACCEPTED = "accepted",
   REJECTED = "rejected"
 }
 
+export type OptionalString = string | null
 export type OptionalNode = Node | null
 export type OptionalEdge = Edge | null
 
 export interface NodeSequenceEditor {
-  getBase(): NodeSequenceEditorBase
+  getNumLayers(): number
+  getLayerOfPosition(position: number): number
+  getLayerOfNode(node: Node): number
+  getPositionsInLayer(layerNumber: number): number[]
   getSequence(): readonly OptionalNode[]
   getSequenceInLayer(layerNumber: number): readonly OptionalNode[]
   rotateToSwap(posFrom: number, posTo: number): UpdateResponse
@@ -44,222 +40,110 @@ export interface NodeSequenceEditorCell {
   getEdgeIfConnected(): OptionalEdge
 }
 
-class NodeOnLayer implements Node {
+export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
+  private nodeIdToLayer: Map<string, number>
+  private sequence: OptionalString[]
+  private layerStartPositions: number[]
+  private omittedByLayer: Set<string>[] = []
+
   constructor(
-    private original: Node,
-    private layer: number
-  ) {}
-
-  getId(): string {
-    return this.original.getId()
+    // Not modified, no need to copy
+    readonly graph: GraphBase,
+    nodeIdToLayer: Map<string, number>
+  ) {
+    // Copy the map
+    this.nodeIdToLayer = new Map(nodeIdToLayer)
+    this.checkNodeToLayerMap()
+    this.sequence = orderNodesByLabelButPreserveOrderWithinEachLayer(
+      graph.getNodes(), this.nodeIdToLayer, this.getNumLayers())
+    this.layerStartPositions = calculateLayerStartPositions(
+      this.sequence.map(os => os!), this.nodeIdToLayer)
+    for(let i = 0; i < this.getNumLayers(); ++i) {
+      this.omittedByLayer.push(new Set<string>())
+    }
   }
 
-  getLayer(): number {
-    return this.layer
-  }
-
-  getOriginal(): Node {
-    return this.original
-  }
-}
-
-export class ConcreteNodeSequenceEditorBase implements NodeSequenceEditorBase {
-  // This is the graph that is shown to the user
-  // that determines the sequence of the nodes.
-  // This graph should hold intermediate nodes and
-  // related edges. These new nodes and edges are
-  // provided from the outside.
-  //
-  // The order of the nodes and the edges within this
-  // graph is not changed when the user reorders the nodes.
-  // The order chosen by the user is in the
-  // NodeSequenceForLayerStructure instance that
-  // is returned by getInitialSequence()
-  //
-  private items: ConcreteGraphBase = new ConcreteGraphBase
-
-  private numLayers: number = 0
-  private layerStartPositions: number[] | null = null
-
-  // Do not call getInitialSequence() before initialization is done
-  isInitialized() {
-    return this.layerStartPositions !== null
-  }
-
-  // Do not add nodes and do not add edges after calling init
-  init() {
-    this.reorderNodesByLabelAndPreserveOrderWithinEachLayer()
-    this.calculateLayerStartPositions()
-  }
-
-  // After initialization, the nodes have been sorted by
-  // layer and within each layer, the order has been
-  // preserved in which the nodes were added during
-  // construction.
-  getNodes(): readonly Node[] {
-    this.checkIsInitialized()
-    return this.items.getNodes().map(nodeOnLayer => (nodeOnLayer as NodeOnLayer).getOriginal())
-  }
-
-  getNodeById(id: string): Node | undefined {
-    // Initialized or not initialize status is not important
-    // because the order of the nodes is not important here
-    return (this.items.getNodeById(id) as NodeOnLayer)?.getOriginal()
-  }
-
-  getEdges(): readonly Edge[] {
-    this.checkIsInitialized()
-    return this.items.getEdges()
-  }
-
-  getEdgeByKey(key: string): Edge | undefined {
-    this.checkIsInitialized()
-    return this.items.getEdgeByKey(key)
-  }
-
-  newLayer(): number {
-    this.checkNotInitialized()
-    return this.numLayers++
-  }
-
-  newPosition(layerNumber: number, initialNode: Node) {
-    this.checkNotInitialized()
-    this.checkLayerNumber(layerNumber)
-    this.items.addExistingNode(new NodeOnLayer(initialNode, layerNumber))
+  private checkNodeToLayerMap() {
+    const coveredLayersSet: Set<number> = new Set()
+    const nonLayeredIds: Set<string> = new Set(this.graph.getNodes().map(n => n.getId()))
+    this.nodeIdToLayer.forEach((v, k) => {
+      if (this.graph.getNodeById(k) === undefined) {
+        throw new Error(`Node to layer map refers to nonexisting node ${k}`)
+      }
+      coveredLayersSet.add(v)
+      nonLayeredIds.delete(k)
+    })
+    if (nonLayeredIds.size !== 0) {
+      throw new Error('Some nodes in the graph do not have a layer')
+    }
+    const coveredLayers: number[] = Array.from(coveredLayersSet).sort((a, b) => a - b)
+    if (coveredLayers.length === 0) {
+      throw new Error('No node has a layer number assigned')
+    }
+    if (coveredLayers[0] !== 0) {
+      throw new Error('Layer 0 cannot be empty')
+    }
+    for(let i = 1; i < coveredLayers.length; ++i) {
+      if ((coveredLayers[i] - coveredLayers[i - 1]) !== 1 ) {
+        throw new Error('Empty layer found, not supported')
+      }
+    }
   }
 
   getNumLayers(): number {
-    return this.numLayers
+    return Math.max(... this.nodeIdToLayer.values()) + 1
   }
 
   getLayerOfPosition(position: number): number {
-    this.checkIsInitialized()
-    return (this.items.getNodes()[position] as NodeOnLayer).getLayer()
+    this.checkPosition(position)
+    let layer = -1
+    let startOfLayer = -1
+    this.layerStartPositions!.forEach((v, i) => {
+      if ( (v <= position) && (v > startOfLayer) ) {
+        startOfLayer = v
+        layer = i
+      }
+    })
+    return layer
   }
 
-  // The node is probably not a NodeOnLayer
   getLayerOfNode(node: Node): number {
-    const nodeOnLayer: NodeOnLayer | undefined = this.items.getNodeById(node.getId()) as NodeOnLayer
-    if (nodeOnLayer === undefined) {
-      throw new Error(`Incompatible node, ConcreteLayerStructure instance does not know node with id ${node.getId()}`)
-    }
-    if (nodeOnLayer.getLayer === undefined) {
-      throw new Error('Programming error, expected a NodeOnLayer in function ConcreteLayerStructure.getLayerOfNode')
-    }
-    return nodeOnLayer!.getLayer()
-  }
-
-  addEdge(edge: Edge) {
-    this.checkNotInitialized()
-    this.items.addEdge(edge)
+    return this.nodeIdToLayer.get(node.getId())!
   }
 
   getPositionsInLayer(layerNumber: number): number[] {
-    this.checkIsInitialized()
     this.checkLayerNumber(layerNumber)
-    if (layerNumber === (this.numLayers - 1)) {
-      return getRange(this.layerStartPositions![layerNumber], this.items.getNodes().length)
+    if (layerNumber === (this.getNumLayers() - 1)) {
+      return getRange(this.layerStartPositions![layerNumber], this.graph.getNodes().length)
     } else {
       return getRange(this.layerStartPositions![layerNumber], this.layerStartPositions![layerNumber + 1])
     }
   }
 
-  buildEditor(): NodeSequenceEditor {
-    this.checkIsInitialized()
-    return new ConcreteNodeSequenceEditor(this)
-  }
-
-  private checkIsInitialized() {
-    if (! this.isInitialized()) {
-      throw new Error("Method is only available after calling init()")
-    }
-  }
-
-  private checkNotInitialized() {
-    if (this.isInitialized()) {
-      throw new Error("Changing this ConcreteLayerStructure will invalidate derived node sequences")
-    }
-  }
-
   private checkLayerNumber(layerNumber: number) {
-    if ((layerNumber < 0) || (layerNumber >= this.numLayers)) {
-      throw new Error(`Layer number out of bound: ${layerNumber}, because there are ${this.numLayers}`)
+    if ((layerNumber < 0) || (layerNumber >= this.getNumLayers())) {
+      throw new Error(`Layer number out of bound: ${layerNumber}, because there are ${this.getNumLayers()}`)
     }
-  }
-
-  private reorderNodesByLabelAndPreserveOrderWithinEachLayer() {
-    let nodesByLayer: Node[][] = []
-    // Do not work wity Array().fill().
-    // That fills every element with the *same* list
-    // If you then update one row, the other
-    // row get secretly updated too.
-    for(let layerNumber = 0; layerNumber < this.getNumLayers(); ++ layerNumber) {
-      nodesByLayer.push([])
-    }
-    this.items.getNodes().forEach(rawNodeOnLayer => {
-      let nodeOnLayer = rawNodeOnLayer as NodeOnLayer
-      nodesByLayer[nodeOnLayer.getLayer()].push(nodeOnLayer)
-    })
-    let newlyOrdered: Node[] = []
-    nodesByLayer.forEach(nodesOfLayer => {
-      // Do not push node.getOriginal() because we need
-      // the node.getLayer() in calculateLayerStartPositions
-      nodesOfLayer.forEach(node => newlyOrdered.push(node))
-    })
-    this.items._putReorderedNodesBack(newlyOrdered)
-  }
-
-  private calculateLayerStartPositions() {
-    this.layerStartPositions = []
-    if (this.items.getNodes().length > 0) {
-      let previousLayer = -1
-      for (let currentPosition = 0; currentPosition < this.items.getNodes().length; ++currentPosition) {
-        let currentLayer = (this.items.getNodes()[currentPosition] as NodeOnLayer).getLayer()
-        if (currentLayer > previousLayer) {
-          this.layerStartPositions.push(currentPosition)
-          previousLayer = currentLayer
-        }
-      }
-    }
-  }
-}
-
-class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
-  private sequence: OptionalNode[]
-  private omittedByLayer: Set<string>[]
-
-  constructor(
-    private base: NodeSequenceEditorBase,
-  ) {
-    // Copy the array
-    this.sequence = [ ... base.getNodes()]
-    this.omittedByLayer = []
-    // Do not use Array(...).fill(...), because that would
-    // assign the same set for each layer. Omitting a node
-    // from one layer would omit it secretly from all others as well
-    for(let i = 0; i < base.getNumLayers(); ++i) {
-      this.omittedByLayer.push(new Set<string>())
-    }
-  }
-
-  getBase(): NodeSequenceEditorBase {
-    return this.base
   }
 
   getSequence(): readonly OptionalNode[] {
-    return this.sequence
+    return this.sequence.map(id => this.optionalNodeOf(id))
+  }
+
+  private optionalNodeOf(optionalId: OptionalString): OptionalNode {
+    return optionalId === null ? null : this.graph.getNodeById(optionalId)!
   }
 
   getSequenceInLayer(layerNumber: number): readonly OptionalNode[] {
     this.checkLayerNumber(layerNumber)
-    return this.base.getPositionsInLayer(layerNumber).map(index => this.getSequence()[index])
+    return this.getPositionsInLayer(layerNumber).map(index => this.getSequence()[index])
   }
 
   rotateToSwap(posFrom: number, posTo: number): UpdateResponse {
     this.checkPosition(posFrom)
     this.checkPosition(posTo)
-    const layerFrom = this.base.getLayerOfPosition(posFrom)
-    const layerTo = this.base.getLayerOfPosition(posTo)
+    const layerFrom = this.getLayerOfPosition(posFrom)
+    const layerTo = this.getLayerOfPosition(posTo)
     if (posFrom === posTo) {
       // Nothing to do
       return UpdateResponse.ACCEPTED
@@ -267,7 +151,7 @@ class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     if (layerFrom !== layerTo) {
       return UpdateResponse.REJECTED
     }
-    const carry: OptionalNode = this.sequence[posFrom]
+    const carry: OptionalString = this.sequence[posFrom]
     this.rotate(posFrom, posTo)
     this.sequence[posTo] = carry
     return UpdateResponse.ACCEPTED
@@ -287,29 +171,32 @@ class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
 
   omitNodeFrom(position: number): UpdateResponse {
     this.checkPosition(position)
-    const optionalNode: OptionalNode = this.sequence[position]
+    const optionalNode: OptionalString = this.sequence[position]
     if (optionalNode === null) {
+      console.log(`No node at position ${position}`)
       // Nothing to do
       return UpdateResponse.ACCEPTED
     }
-    const layerNumber = this.base.getLayerOfPosition(position)
-    const node: Node = optionalNode!
-    if (this.omittedByLayer[layerNumber].has(node.getId())) {
-      throw Error(`Programming error: node ${node.getId()} exists at position ${position} and is also omitted from layer ${layerNumber}`)
+    const layerNumber = this.getLayerOfPosition(position)
+    console.log(`Layer number: ${layerNumber}`)
+    const nodeId: string = optionalNode!
+    if (this.omittedByLayer[layerNumber].has(nodeId)) {
+      throw Error(`Programming error: node ${nodeId} exists at position ${position} and is also omitted from layer ${layerNumber}`)
     }
     this.sequence[position] = null
-    this.omittedByLayer[layerNumber].add(node.getId())
+    this.omittedByLayer[layerNumber].add(nodeId)
+    console.log(`omittedByLayer: ${Array.from(this.omittedByLayer[layerNumber])}`)
     return UpdateResponse.ACCEPTED
   }
 
   reintroduceNode(position: number, node: Node): UpdateResponse {
     this.checkPosition(position)
-    const layerNumber = this.base.getLayerOfPosition(position)
+    const layerNumber = this.getLayerOfPosition(position)
     if (this.sequence[position] !== null) {
       // Destination spot is not empty
       return UpdateResponse.REJECTED
     }
-    if (this.base.getLayerOfNode(node) !== layerNumber) {
+    if (this.getLayerOfNode(node) !== layerNumber) {
       // Trying to reintroduce a node that lives in another layer
       return UpdateResponse.REJECTED
     }
@@ -317,44 +204,43 @@ class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
       // Node to reintroduce is in already.
       return UpdateResponse.REJECTED
     }
-    this.sequence[position] = node
+    this.sequence[position] = node.getId()
     this.omittedByLayer[layerNumber].delete(node.getId())
     return UpdateResponse.ACCEPTED
   }
 
   getOrderedOmittedNodes(): readonly Node[] {
-    const originalOrder = this.base.getNodes()
+    return this.getOmittedNodesSatisfying(n => true)
+  }
+
+  private getOmittedNodesSatisfying(pred: (n: Node) => boolean) {
+    const originalOrder = this.graph.getNodes()
     const result: Node[] = []
-    originalOrder.forEach((n, position) => {
-      const layerNumber = this.base.getLayerOfPosition(position)
+    originalOrder.forEach(n => {
+      const layerNumber: number = this.nodeIdToLayer.get(n.getId())!
       if (this.omittedByLayer[layerNumber].has(n.getId())) {
-        result.push(n)
+        if (pred(n)) {
+          result.push(n)
+        }
       }
     })
     return result
   }
 
   getOrderedOmittedNodesInLayer(layerNumber: number): Node[] {
-    const originalOrder = this.base.getNodes()
-    const result: Node[] = []
-    this.base.getPositionsInLayer(layerNumber).forEach(position => {
-      if (this.omittedByLayer[layerNumber].has(originalOrder[position].getId())) {
-        result.push(originalOrder[position])
-      }
-    })
-    return result
+    return this.getOmittedNodesSatisfying(n => (this.nodeIdToLayer.get(n.getId()) === layerNumber))
   }
 
   getCell(positionFrom: number, positionTo: number): NodeSequenceEditorCell {
     this.checkPosition(positionFrom)
     this.checkPosition(positionTo)
-    const layerFrom = this.base.getLayerOfPosition(positionFrom)
-    const layerTo = this.base.getLayerOfPosition(positionTo)
+    const layerFrom = this.getLayerOfPosition(positionFrom)
+    const layerTo = this.getLayerOfPosition(positionTo)
     let optionalEdge = null
-    const optionalNodeFrom: OptionalNode = this.sequence[positionFrom]
-    const optionalNodeTo: OptionalNode = this.sequence[positionTo]
+    const optionalNodeFrom: OptionalNode = this.optionalNodeOf(this.sequence[positionFrom])
+    const optionalNodeTo: OptionalNode = this.optionalNodeOf(this.sequence[positionTo])
     if ((optionalNodeFrom !== null) && (optionalNodeTo !== null)) {
-      const searchedEdge: Edge | undefined = this.base.getEdgeByKey(getEdgeKey(optionalNodeFrom!, optionalNodeTo!))
+      const searchedEdge: Edge | undefined = this.graph.getEdgeByKey(getEdgeKey(optionalNodeFrom!, optionalNodeTo!))
       if (searchedEdge !== undefined) {
         optionalEdge = searchedEdge!
       }
@@ -365,12 +251,6 @@ class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   private checkPosition(position: number) {
     if ((position < 0) || (position >= this.sequence.length)) {
       throw new Error(`Position out of bounds: ${position}, because there are ${this.sequence.length} nodes`)
-    }
-  }
-
-  private checkLayerNumber(layerNumber: number) {
-    if (layerNumber < 0 || (layerNumber >= this.base.getNumLayers())) {
-      throw new Error(`Layer number is out of bounds: ${layerNumber}, because there are ${this.base.getNumLayers()} layers`)
     }
   }
 }
@@ -403,4 +283,40 @@ class ConcreteNodeSequenceCell implements NodeSequenceEditorCell {
   getEdgeIfConnected(): OptionalEdge {
     return this.optionalEdge
   }
+}
+
+function orderNodesByLabelButPreserveOrderWithinEachLayer(nodes: readonly Node[], nodeIdToLayer: Map<string, number>, numLayers: number): string[] {
+  let nodesByLayer: string[][] = []
+  // Do not work wity Array().fill().
+  // That fills every element with the *same* list
+  // If you then update one row, the other
+  // row get secretly updated too.
+  for(let layerNumber = 0; layerNumber < numLayers; ++layerNumber) {
+    nodesByLayer.push([])
+  }
+  nodes.forEach(n => {
+    const id: string = n.getId()
+    const layer: number = nodeIdToLayer.get(id)!
+    nodesByLayer[layer].push(id)
+  })
+  let newlyOrdered: string[] = []
+  nodesByLayer.forEach(nodesOfLayer => {
+    nodesOfLayer.forEach(nodeId => newlyOrdered.push(nodeId))
+  })
+  return newlyOrdered
+}
+
+function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer: Map<string, number>): number[] {
+  let layerStartPositions = []
+  if (sequence.length > 0) {
+    let previousLayer = -1
+    for (let currentPosition = 0; currentPosition < sequence.length; ++currentPosition) {
+      let currentLayer: number = nodeIdToLayer.get(sequence[currentPosition])!
+      if (currentLayer > previousLayer) {
+        layerStartPositions.push(currentPosition)
+        previousLayer = currentLayer
+      }
+    }
+  }
+  return layerStartPositions
 }

@@ -1,5 +1,5 @@
 import { Node, Graph, Edge, ConcreteEdge } from './graph'
-import { NodeSequenceEditorBase, ConcreteNodeSequenceEditorBase } from './nodeSequenceEditor'
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from './nodeSequenceEditor'
 
 enum CreationReason {
   ORIGINAL = 'original',
@@ -55,9 +55,9 @@ class NodeSequenceEditorBuilder {
     readonly nodeToLayerMap: Map<string, number>,
     readonly orderedOmittedNodes: Node[]) {}
 
-  build(): NodeSequenceEditorBase {
+  build(): NodeSequenceEditor {
     // TODO: Implement
-    return new ConcreteNodeSequenceEditorBase()
+    return new ConcreteNodeSequenceEditor()
   }
 }
 
