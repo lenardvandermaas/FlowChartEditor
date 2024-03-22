@@ -13,7 +13,7 @@ export enum UpdateResponse {
   REJECTED = "rejected"
 }
 
-export type OptionalString = string | null
+type OptionalString = string | null
 export type OptionalNode = Node | null
 export type OptionalEdge = Edge | null
 
@@ -80,14 +80,11 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     if (coveredLayers.length === 0) {
       throw new Error('No node has a layer number assigned')
     }
-    if (coveredLayers[0] !== 0) {
-      throw new Error('Layer 0 cannot be empty')
-    }
-    for(let i = 1; i < coveredLayers.length; ++i) {
-      if ((coveredLayers[i] - coveredLayers[i - 1]) !== 1 ) {
-        throw new Error('Empty layer found, not supported')
+    coveredLayers.forEach((v, i) => {
+      if (v !== i) {
+        throw new Error('There are empty layers, not supported')
       }
-    }
+    })
   }
 
   getNumLayers(): number {
@@ -98,16 +95,17 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     this.checkPosition(position)
     let layer = -1
     let startOfLayer = -1
-    this.layerStartPositions!.forEach((v, i) => {
-      if ( (v <= position) && (v > startOfLayer) ) {
-        startOfLayer = v
-        layer = i
+    this.layerStartPositions.forEach((startOfLayerCandidate, layerCandidate) => {
+      if ( (startOfLayerCandidate <= position) && (startOfLayerCandidate > startOfLayer) ) {
+        startOfLayer = startOfLayerCandidate
+        layer = layerCandidate
       }
     })
     return layer
   }
 
   getLayerOfNode(node: Node): number {
+    this.checkNode(node)
     return this.nodeIdToLayer.get(node.getId())!
   }
 
@@ -117,12 +115,6 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
       return getRange(this.layerStartPositions![layerNumber], this.graph.getNodes().length)
     } else {
       return getRange(this.layerStartPositions![layerNumber], this.layerStartPositions![layerNumber + 1])
-    }
-  }
-
-  private checkLayerNumber(layerNumber: number) {
-    if ((layerNumber < 0) || (layerNumber >= this.getNumLayers())) {
-      throw new Error(`Layer number out of bound: ${layerNumber}, because there are ${this.getNumLayers()}`)
     }
   }
 
@@ -173,19 +165,16 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     this.checkPosition(position)
     const optionalNode: OptionalString = this.sequence[position]
     if (optionalNode === null) {
-      console.log(`No node at position ${position}`)
       // Nothing to do
       return UpdateResponse.ACCEPTED
     }
-    const layerNumber = this.getLayerOfPosition(position)
-    console.log(`Layer number: ${layerNumber}`)
     const nodeId: string = optionalNode!
+    const layerNumber = this.nodeIdToLayer.get(nodeId)!
     if (this.omittedByLayer[layerNumber].has(nodeId)) {
       throw Error(`Programming error: node ${nodeId} exists at position ${position} and is also omitted from layer ${layerNumber}`)
     }
     this.sequence[position] = null
     this.omittedByLayer[layerNumber].add(nodeId)
-    console.log(`omittedByLayer: ${Array.from(this.omittedByLayer[layerNumber])}`)
     return UpdateResponse.ACCEPTED
   }
 
@@ -228,6 +217,7 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   }
 
   getOrderedOmittedNodesInLayer(layerNumber: number): Node[] {
+    this.checkLayerNumber(layerNumber)
     return this.getOmittedNodesSatisfying(n => (this.nodeIdToLayer.get(n.getId()) === layerNumber))
   }
 
@@ -251,6 +241,18 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   private checkPosition(position: number) {
     if ((position < 0) || (position >= this.sequence.length)) {
       throw new Error(`Position out of bounds: ${position}, because there are ${this.sequence.length} nodes`)
+    }
+  }
+
+  private checkLayerNumber(layerNumber: number) {
+    if ((layerNumber < 0) || (layerNumber >= this.getNumLayers())) {
+      throw new Error(`Layer number out of bound: ${layerNumber}, because there are ${this.getNumLayers()}`)
+    }
+  }
+
+  private checkNode(node: Node) {
+    if (this.graph.getNodeById(node.getId()) === undefined) {
+      throw Error(`Invalid node provided, id is ${node.getId()}`)
     }
   }
 }

@@ -1,5 +1,5 @@
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
-import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase  } from "./graph"
+import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase  } from "./graph"
 
 function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
@@ -30,6 +30,11 @@ function newEdge(nodeFrom: Node, nodeTo: Node): Edge {
 
 function getSimpleInstance(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
+  addEdgesToSimple(g)
+  return new ConcreteNodeSequenceEditor(g, simpleNodeToLayerMap())
+}
+
+function addEdgesToSimple(g: ConcreteGraphBase) {
   g.addExistingNode(newTestNode('A'))
   g.addExistingNode(newTestNode('B'))
   g.addExistingNode(newTestNode('C'))
@@ -37,14 +42,16 @@ function getSimpleInstance(): ConcreteNodeSequenceEditor {
   g.addExistingNode(newTestNode('E'))
   g.addEdge(newEdge(g.getNodeById('A')!, g.getNodeById('C')!))
   g.addEdge(newEdge(g.getNodeById('B')!, g.getNodeById('E')!))
-  const m = new Map<string, number>([
+}
+
+function simpleNodeToLayerMap(): Map<string, number> {
+  return new Map<string, number>([
     ['A', 0],
     ['B', 0],
     ['C', 1],
     ['D', 1],
     ['E', 0]
   ])
-  return new ConcreteNodeSequenceEditor(g, m)
 }
 
 describe('NodeSequenceEditor', () => {
@@ -53,6 +60,50 @@ describe('NodeSequenceEditor', () => {
     const newOrder = instance.getSequence()
     const theIds = newOrder.map(n => n!.getId())
     expect(theIds).toEqual(['1A', '5B', '2E', '4C', '3D'])
+  })
+
+  it('If map nodeIdToLayer omits id then error', () => {
+    const g = new ConcreteGraphBase()
+    addEdgesToSimple(g)
+    const m: Map<string, number> = simpleNodeToLayerMap()
+    m.delete('A')
+    expectInstanceCreationFails(g, m)  
+  })
+
+  function expectInstanceCreationFails(g: GraphBase, m: Map<string, number>) {
+    let caught = false
+    try {
+      new ConcreteNodeSequenceEditor(g, m)  
+    } catch(e) {
+      caught = true
+    }
+    expect(caught).toBe(true)
+  }
+
+  it('If map nodeIdToLayer refers nonexistent node then error', () => {
+    const g = new ConcreteGraphBase()
+    addEdgesToSimple(g)
+    const m: Map<string, number> = simpleNodeToLayerMap()
+    m.set('X', 0)
+    expectInstanceCreationFails(g, m)
+  })
+
+  it('If layer 0 is empty then error', () => {
+    const g = new ConcreteGraphBase()
+    addEdgesToSimple(g)
+    const m: Map<string, number> = simpleNodeToLayerMap()
+    const keysLayerZero: string[] = [ ... m.keys()].filter(k => m.get(k) == 0)
+    keysLayerZero.forEach(k => m.set(k, 1))
+    expectInstanceCreationFails(g, m)
+  })
+
+  it('If layer 1 is empty and there is a layer 2, then error', () => {
+    const g = new ConcreteGraphBase()
+    addEdgesToSimple(g)
+    const m: Map<string, number> = simpleNodeToLayerMap()
+    const keysLayerOne: string[] = [ ... m.keys()].filter(k => m.get(k) == 1)
+    keysLayerOne.forEach(k => m.set(k, 2))
+    expectInstanceCreationFails(g, m)
   })
 
   it('Member functions on layers', () => {
