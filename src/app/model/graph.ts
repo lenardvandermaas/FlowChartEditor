@@ -168,3 +168,6 @@ export class ConcreteEdge implements Edge {
     return this.to
   }
 }
+
+export type OptionalNode = Node | null
+export type OptionalEdge = Edge | null

@@ -1,27 +1,52 @@
-import { Node, Graph, Edge, ConcreteEdge } from './graph'
+import { Node, Graph, GraphBase, Edge, ConcreteGraphBase, OptionalNode } from './graph'
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from './nodeSequenceEditor'
+import { getRange } from '../util/util'
 
-enum CreationReason {
+export enum CreationReason {
   ORIGINAL = 'original',
   INTERMEDIATE = 'intermediate'
 }
 
-class NodeForEditor implements Node {
+export interface NodeForEditor extends Node {
+  getCreationReason(): CreationReason
+}
+
+export class OriginalNode implements NodeForEditor {
   constructor(
-    readonly creationReason: CreationReason,
-    readonly original: Node
+    private original: Node
   ) {}
 
-  getId(): string {
+  getId() {
     return this.original.getId()
+  }
+
+  getCreationReason(): CreationReason {
+    return CreationReason.ORIGINAL
+  }
+}
+
+export class IntermediateNode implements NodeForEditor {
+  constructor(
+    private id: string
+  ) {}
+
+  getId() {
+    return this.id
+  }
+
+  getCreationReason() {
+    return CreationReason.INTERMEDIATE
   }
 }
 
 // Holds an original edge in which the from and to nodes
-// are replaced by extended nodes. Or holds a connection
-// with intermediate nodes. For an intermediate edge,
+// are replaced by NodeForEditor instances, to include
+// CreationReason ORIGINAL. Or holds a connection
+// with intermediate nodes, CreationReason INTERMEDIATE.
+//
+// For an intermediate edge,
 // use original.getFrom().getId() and original.getTo().getId()
-// to see the original nodes for which this intermediate
+// to look up the original nodes for which this intermediate
 // edge was created. Do not use the nodes original.getFrom() and
 // original.getTo() directly because that would mix up
 // original nodes and nodes with creation information included.
@@ -32,7 +57,7 @@ class NodeForEditor implements Node {
 // available without using the original field, because
 // the connected nodes are instances of NodeForEditor
 //
-class EdgeForEditor implements Edge {
+export class EdgeForEditor implements Edge {
   constructor(
     readonly creationReason: CreationReason,
     readonly original: Edge,
@@ -49,29 +74,88 @@ class EdgeForEditor implements Edge {
   }
 }
 
-class NodeSequenceEditorBuilder {
+export class NodeSequenceEditorBuilder {
+  readonly graph: GraphBase
+  readonly orderedOmittedNodes: Node[]
+  private nextSeqIntermediateNode: number = 1
+
   constructor(
-    readonly graph: Graph,
-    readonly nodeToLayerMap: Map<string, number>,
-    readonly orderedOmittedNodes: Node[]) {}
+    readonly nodeIdToLayer: Map<string, number>,
+    originalGraph: GraphBase)
+  {
+    this.orderedOmittedNodes = originalGraph.getNodes()
+      .filter(n => ! nodeIdToLayer.has(n.getId()))
+    this.graph = new ConcreteGraphBase()
+    originalGraph.getNodes()
+      .filter(n => nodeIdToLayer.has(n.getId()))
+      .map(n => new OriginalNode(n))
+      .forEach(n => (this.graph as ConcreteGraphBase).addExistingNode(n))
+    originalGraph.getEdges()
+      .filter(edge => nodeIdToLayer.has(edge.getFrom().getId()))
+      .filter(edge => nodeIdToLayer.has(edge.getTo().getId()))
+      .forEach(edge => this.handleEdge(edge))
+  }
+
+  handleEdge(edge: Edge): void {
+    const layerFrom: number = this.nodeIdToLayer.get(edge.getFrom().getId())!
+    const layerTo: number = this.nodeIdToLayer.get(edge.getTo().getId())!
+    if (Math.abs(layerTo - layerFrom) <= 1) {
+      // We do not throw an error for edges within the same layer.
+      // Maybe a future layering algorithm will allow this.
+      // It is not the duty of this function to test the layer
+      // assignment algorithm.
+      (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
+        CreationReason.ORIGINAL,
+        edge,
+        this.graph.getNodeById(edge.getFrom().getId()) as NodeForEditor,
+        this.graph.getNodeById(edge.getTo().getId()) as NodeForEditor
+      ))
+    } else {
+      const intermediateLayers: number[] = getIntermediateLayers(layerFrom, layerTo)
+      const intermediateNodes: NodeForEditor[] = intermediateLayers.map(layer => new IntermediateNode(
+        `intermediate${this.nextSeqIntermediateNode++}`
+      ));
+      (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
+        CreationReason.INTERMEDIATE,
+        edge,
+        this.graph.getNodeById(edge.getFrom().getId())! as NodeForEditor,
+        intermediateNodes[0]
+      ))
+      for(let i = 1; i < intermediateNodes.length - 1; ++i) {
+        (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
+          CreationReason.INTERMEDIATE,
+          edge,
+          intermediateNodes[i-1],
+          intermediateNodes[i]
+        ))
+      }
+      (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
+        CreationReason.INTERMEDIATE,
+        edge,
+        intermediateNodes[intermediateNodes.length - 1],
+        this.graph.getNodeById(edge.getTo().getId()) as NodeForEditor
+      ))
+      intermediateNodes.forEach((n, index) => this.nodeIdToLayer.set(n.getId(), intermediateLayers[index]))
+    }
+  }
 
   build(): NodeSequenceEditor {
-    // TODO: Implement
-    return new ConcreteNodeSequenceEditor()
+    return new ConcreteNodeSequenceEditor(this.graph, this.nodeIdToLayer)
   }
 }
 
-/* TODO: Uncomment and build this
-function makeHorizontalGroups(graph: Graph): NodeSequenceEditorBuilder {
-  // TODO: Call calculateLayerNumbers here.
-  // TODO: Create intermediate nodes and build the
-  //       extended Graph.
-  // TODO: How to handle omitted nodes without mixing up
-  //       NodeForEditor and Node or EdgeForEditor and Edge.
+function getIntermediateLayers(layerFrom: number, layerTo: number): number[] {
+  let result: number[]
+  if(layerFrom < layerTo) {
+    result = getRange(layerFrom, layerTo)
+  } else {
+    result = getRange(layerTo, layerFrom)
+  }
+  result.shift()
+  return result
 }
-*/
 
-function calculateLayerNumbers(graph: Graph): Map<string, number> {
+export function calculateLayerNumbers(graph: Graph): Map<string, number> {
   let layerMap: Map<string, number> = new Map()
   let queue: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n).length === 0)
   while (queue.length > 0) {

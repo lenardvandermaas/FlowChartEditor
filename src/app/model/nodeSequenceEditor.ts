@@ -5,7 +5,7 @@
 // Managing how to choose the sequence of nodes within a layer is also
 // supported here.
 
-import { Node, Edge, GraphBase, ConcreteGraphBase, getEdgeKey } from './graph'
+import { Node, Edge, GraphBase, getEdgeKey, OptionalNode, OptionalEdge } from './graph'
 import { getRange } from '../util/util'
 
 export enum UpdateResponse {
@@ -14,8 +14,6 @@ export enum UpdateResponse {
 }
 
 type OptionalString = string | null
-export type OptionalNode = Node | null
-export type OptionalEdge = Edge | null
 
 export interface NodeSequenceEditor {
   getNumLayers(): number
