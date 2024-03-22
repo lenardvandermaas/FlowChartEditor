@@ -51,14 +51,6 @@ export class ConcreteGraphBase implements GraphBase {
     this.nodes.push(node)
     this.nodesById.set(id, node)
   }
-
-  _putReorderedNodesBack(newlyOrdered: Node[]) {
-    if (newlyOrdered.length != this.nodes.length) {
-      throw new Error(`_putReorderedNodesBack does not accept a node vector with a different length, old=${this.nodes.length}, new=${newlyOrdered.length}`)
-    }
-    this.nodes = newlyOrdered
-  }
-
   connect(from: Node, to: Node, text?: string) {
     const key = getEdgeKey(from, to);
     const seq = this.edges.length
@@ -167,15 +159,6 @@ export class ConcreteEdge implements Edge {
     readonly to: Node,
     readonly text?: string
   ) {}
-
-  static connectNodesWithDataFrom(nodeFrom: Node, nodeTo: Node, data: ConcreteEdge) {
-    return new ConcreteEdge(
-      data.seq,
-      nodeFrom,
-      nodeTo,
-      data.text
-    )
-  }
 
   getFrom(): Node {
     return this.from
