@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { MermaidParserService } from './mermaid-parser.service';
-import { ConcreteNode, Node, ConcreteEdge, Edge, GraphConnectionseCacheDecorator, Graph } from '../model/graph'
+import { ConcreteNode, Node, ConcreteEdge, Edge, GraphConnectionsDecorator, Graph } from '../model/graph'
 
 describe('MermaidParserService', () => {
   let service: MermaidParserService;
@@ -72,7 +72,7 @@ d2e2 --> |success| d2e12
     N3 --> |success| End
 `
     let base = service.getGraph(input)
-    let g = new GraphConnectionseCacheDecorator(base)
+    let g = new GraphConnectionsDecorator(base)
     checkNodePointsTo("Start", ["N1", "N2"], g)
     checkNodeReachedFrom("Start", [], g)
     checkNodePointsTo("N1", ["N3"], g)

@@ -1,4 +1,4 @@
-import { Node, Edge, ConcreteGraphBase, Graph, GraphConnectionseCacheDecorator } from './graph'
+import { Node, Edge, ConcreteGraphBase, Graph, GraphConnectionsDecorator } from './graph'
 
 describe('Graph test', () => {
   it('Calculation of outgoing and incoming edges', () => {
@@ -15,7 +15,7 @@ describe('Graph test', () => {
     newEdge('N2', 'N3', b)
     newEdge('N3', 'N2', b)
     newEdge('N3', 'End', b)
-    const g: Graph = new GraphConnectionseCacheDecorator(b)
+    const g: Graph = new GraphConnectionsDecorator(b)
     checkNodePointsTo("Start", ["N1", "N2"], g)
     checkNodeReachedFrom("Start", [], g)
     checkNodePointsTo("N1", ["N3"], g)

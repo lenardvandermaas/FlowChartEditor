@@ -169,9 +169,19 @@ export function calculateLayerNumbers(graph: Graph): Map<string, number> {
       // been added if there once was a current with an
       // edge leading to it.
       const precedingLayers: number[] = incomingEdges
-        .filter(edge => layerMap.has(edge.getFrom().getId()))
-        .map(edge => layerMap.get(edge.getFrom().getId())!)
-      layerMap.set(current.getId(), Math.max( ... precedingLayers) + 1)
+        .map(edge => edge.getFrom())
+        .filter(predecessor => layerMap.has(predecessor.getId()))
+        .map(predecessor => layerMap.get(predecessor.getId())!)
+      let layerNumberCandidate = Math.max( ... precedingLayers) + 1
+      const layersOfPlacedSuccessors: number[] = graph.getOrderedEdgesStartingFrom(current)
+        .map(edge => edge.getTo())
+        .filter(successor => layerMap.has(successor.getId()))
+        .map(successor => layerMap.get(successor.getId())!)
+      const forbiddenByPlacedSuccessors: Set<number> = new Set(layersOfPlacedSuccessors)
+      while (forbiddenByPlacedSuccessors.has(layerNumberCandidate)) {
+        ++layerNumberCandidate
+      }
+      layerMap.set(current.getId(), layerNumberCandidate)
     }
     // current has a layer number but it is off the queue.
     // Still no node on the queue has a layer number

@@ -211,7 +211,6 @@ describe('NodeSequenceEditor', () => {
   })
 
   it('Check order of omitted nodes and reintroducing', () => {
-    console.log('Check order of omitted nodes and reintroducing')
     const instance: ConcreteNodeSequenceEditor = getInstanceToCheckOrdering()
     instance.omitNodeFrom(0)
     instance.omitNodeFrom(1)

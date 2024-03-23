@@ -79,7 +79,7 @@ export class ConcreteGraphBase implements GraphBase {
   }
 }
 
-export class GraphConnectionseCacheDecorator implements Graph {
+export class GraphConnectionsDecorator implements Graph {
   private startingFrom: Map<string, Edge[]>;
   private leadingTo: Map<string, Edge[]>;
 
