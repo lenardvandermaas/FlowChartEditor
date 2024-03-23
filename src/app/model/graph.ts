@@ -71,10 +71,10 @@ export class ConcreteGraphBase implements GraphBase {
   private checkEdgeRefersToExistingNodes(edge: Edge) {
     let key = getEdgeKey(edge.getFrom(), edge.getTo())
     if (! this.nodesById.has(edge.getFrom().getId())) {
-      throw new Error("Illegal edge with key ${key} because referred from node is not in this graph")
+      throw new Error(`Illegal edge with key ${key} because referred from node is not in this graph`)
     }
     if( ! this.nodesById.has(edge.getTo().getId())) {
-      throw new Error("Illegal edge with key ${key} because referred to node is not in this graph")
+      throw new Error(`Illegal edge with key ${key} because referred to node is not in this graph`)
     }
   }
 }

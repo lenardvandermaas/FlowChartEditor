@@ -13,7 +13,7 @@ export interface NodeForEditor extends Node {
 
 export class OriginalNode implements NodeForEditor {
   constructor(
-    private original: Node
+    readonly original: Node
   ) {}
 
   getId() {
@@ -66,11 +66,11 @@ export class EdgeForEditor implements Edge {
   ) {}
 
   getFrom(): Node {
-    return this.getFrom()
+    return this.from
   }
 
   getTo(): Node {
-    return this.getTo()
+    return this.to
   }
 }
 
@@ -115,13 +115,14 @@ export class NodeSequenceEditorBuilder {
       const intermediateNodes: NodeForEditor[] = intermediateLayers.map(layer => new IntermediateNode(
         `intermediate${this.nextSeqIntermediateNode++}`
       ));
+      intermediateNodes.forEach(n => (this.graph as ConcreteGraphBase).addExistingNode(n));
       (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
         CreationReason.INTERMEDIATE,
         edge,
         this.graph.getNodeById(edge.getFrom().getId())! as NodeForEditor,
         intermediateNodes[0]
       ))
-      for(let i = 1; i < intermediateNodes.length - 1; ++i) {
+      for(let i = 1; i < intermediateNodes.length; ++i) {
         (this.graph as ConcreteGraphBase).addEdge(new EdgeForEditor(
           CreationReason.INTERMEDIATE,
           edge,
@@ -148,10 +149,12 @@ function getIntermediateLayers(layerFrom: number, layerTo: number): number[] {
   let result: number[]
   if(layerFrom < layerTo) {
     result = getRange(layerFrom, layerTo)
+    result.shift()
   } else {
     result = getRange(layerTo, layerFrom)
+    result.shift()
+    result.reverse()
   }
-  result.shift()
   return result
 }
 
