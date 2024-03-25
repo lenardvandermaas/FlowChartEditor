@@ -53,7 +53,7 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     this.nodeIdToLayer = new Map(nodeIdToLayer)
     this.checkNodeToLayerMap()
     this.sequence = orderNodesByLabelButPreserveOrderWithinEachLayer(
-      graph.getNodes(), this.nodeIdToLayer, this.getNumLayers())
+      graph.getNodes(), this.nodeIdToLayer, Math.max( ... nodeIdToLayer.values()) + 1)
     this.layerStartPositions = calculateLayerStartPositions(
       this.sequence.map(os => os!), this.nodeIdToLayer)
     for(let i = 0; i < this.getNumLayers(); ++i) {
@@ -86,20 +86,19 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   }
 
   getNumLayers(): number {
-    return Math.max(... this.nodeIdToLayer.values()) + 1
+    return this.layerStartPositions.length
   }
 
   getLayerOfPosition(position: number): number {
     this.checkPosition(position)
-    let layer = -1
-    let startOfLayer = -1
-    this.layerStartPositions.forEach((startOfLayerCandidate, layerCandidate) => {
-      if ( (startOfLayerCandidate <= position) && (startOfLayerCandidate > startOfLayer) ) {
-        startOfLayer = startOfLayerCandidate
-        layer = layerCandidate
+    // Do not use array method findLastIndex() because that exists
+    // only from TypeScript language version ES2023 onwards.
+    for (let layerNumber = this.getNumLayers() - 1; layerNumber >= 0; --layerNumber) {
+      if (this.layerStartPositions[layerNumber] <= position) {
+        return layerNumber
       }
-    })
-    return layer
+    }
+    throw new Error('Cannot happen because layer 0 starts at position 0')
   }
 
   getLayerOfNode(node: Node): number {
@@ -224,7 +223,7 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     this.checkPosition(positionTo)
     const layerFrom = this.getLayerOfPosition(positionFrom)
     const layerTo = this.getLayerOfPosition(positionTo)
-    let optionalEdge = null
+    let optionalEdge: OptionalEdge = null
     const optionalNodeFrom: OptionalNode = this.optionalNodeOf(this.sequence[positionFrom])
     const optionalNodeTo: OptionalNode = this.optionalNodeOf(this.sequence[positionTo])
     if ((optionalNodeFrom !== null) && (optionalNodeTo !== null)) {
@@ -299,15 +298,11 @@ function orderNodesByLabelButPreserveOrderWithinEachLayer(nodes: readonly Node[]
     const layer: number = nodeIdToLayer.get(id)!
     nodesByLayer[layer].push(id)
   })
-  let newlyOrdered: string[] = []
-  nodesByLayer.forEach(nodesOfLayer => {
-    nodesOfLayer.forEach(nodeId => newlyOrdered.push(nodeId))
-  })
-  return newlyOrdered
+  return nodesByLayer.flat()
 }
 
 function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer: Map<string, number>): number[] {
-  let layerStartPositions = []
+  let layerStartPositions: number[] = []
   if (sequence.length > 0) {
     let previousLayer = -1
     for (let currentPosition = 0; currentPosition < sequence.length; ++currentPosition) {
