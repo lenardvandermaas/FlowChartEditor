@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Graph, ConcreteGraph } from '../model/graph'
+import { GraphBase, ConcreteGraphBase } from '../model/graph'
 
 @Injectable({
   providedIn: 'root'
@@ -7,8 +7,8 @@ import { Graph, ConcreteGraph } from '../model/graph'
 export class MermaidParserService {
   constructor() { }
 
-  getGraph(str: string): Graph {
-    const result = new ConcreteGraph()
+  getGraph(str: string): GraphBase {
+    const result = new ConcreteGraphBase()
     const lines: string[] = str.split(/\r?\n/).map(line => line.trim());
     const nodeLines: string[] = lines.filter(line => line.search(/^[a-zA-Z0-9-]+\(/) === 0);
     const forwardLines: string[] = lines.filter(line => !(line.startsWith('classDef') || line.startsWith('linkStyle')) && line.search(/^[a-zA-Z0-9-]+ /) !== -1);
