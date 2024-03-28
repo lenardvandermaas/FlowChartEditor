@@ -1,12 +1,30 @@
-<p>sequence-editor works!</p>
+<p>Available</p>
 
 <table
   cdkDropList
+  id="available"
+  cdkDropListData="available"
+  cdkDropListConnectedTo="omitted"
   (cdkDropListDropped)="drop($event)"
 >
   <tr *ngFor="let row of items" cdkDrag>
     <td cdkDragHandle>{{ row[0] }}</td>
     <td>{{ row[1] }}</td>
+  </tr>
+</table>
+
+<p>Omitted</p>
+
+<table
+  cdkDropList
+  id="omitted"
+  cdkDropListData="omitted"
+  cdkDropList
+  cdkDropListConnectedTo="available"
+  (cdkDropListDropped)="drop($event)"
+>
+  <tr *ngFor="let item of otherItems" cdkDrag>
+    <td cdkDragHandle>{{ item }}</td>
   </tr>
 </table>
 <div>{{ lastMove }}</div>

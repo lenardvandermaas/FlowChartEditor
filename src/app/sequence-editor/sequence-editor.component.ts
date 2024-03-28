@@ -15,11 +15,20 @@ export class SequenceEditorComponent {
     ['noot', 'two'],
     ['mies', 'three']
   ]
+
+  otherItems = [
+    'Gandalf',
+    'Frodo',
+    'Bilbo'
+  ]
+
   lastMove = ''
 
-  drop($event: CdkDragDrop<string[]>) {
+  drop($event: CdkDragDrop<string>) {
     const indexFrom = $event.previousIndex
     const indexTo = $event.currentIndex
-    this.lastMove = `From ${indexFrom} to ${indexTo}`
+    const originalList = $event.previousContainer.data
+    const newList = $event.container.data
+    this.lastMove = `From ${originalList}:${indexFrom} to ${newList}:${indexTo}`
   }
 }
