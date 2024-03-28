@@ -1,0 +1,12 @@
+<p>sequence-editor works!</p>
+
+<table
+  cdkDropList
+  (cdkDropListDropped)="drop($event)"
+>
+  <tr *ngFor="let row of items" cdkDrag>
+    <td cdkDragHandle>{{ row[0] }}</td>
+    <td>{{ row[1] }}</td>
+  </tr>
+</table>
+<div>{{ lastMove }}</div>
