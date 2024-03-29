@@ -1,2 +1,21 @@
-<p>flow-chart-editor works!</p>
-<app-sequence-editor></app-sequence-editor>
+FlowChartEditor is being refactored. For now, the new version, which is not
+complete yet, is shown at the top of this window. Scroll down to see the old
+version.
+
+<h1 New version></h1>
+
+<table>
+  <tr>
+    <td>
+      <label>Mermaid input</label>
+      <textarea [(ngModel)]="mermaidText"></textarea>      
+    </td>
+    <td>
+      <button (click)="loadMermaid()">Load</button>
+    </td>
+  </tr>
+</table>
+
+<app-sequence-editor id="sequenceEditor"></app-sequence-editor>
+
+<h1 End of new version></h1>

@@ -24,11 +24,17 @@ export class SequenceEditorComponent {
 
   lastMove = ''
 
+  receivedFromParent = 'Not yet set'
+
   drop($event: CdkDragDrop<string>) {
     const indexFrom = $event.previousIndex
     const indexTo = $event.currentIndex
     const originalList = $event.previousContainer.data
     const newList = $event.container.data
     this.lastMove = `From ${originalList}:${indexFrom} to ${newList}:${indexTo}`
+  };
+
+  receiveFromParent(message: string) {
+    this.receivedFromParent = message
   }
 }
