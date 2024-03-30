@@ -34,6 +34,12 @@ export class SequenceEditorComponent {
     this.lastMove = `From ${originalList}:${indexFrom} to ${newList}:${indexTo}`
   };
 
+  select($event: Event, from: string) {
+    const target = $event.target as HTMLSelectElement
+    const option: string = target.value
+    this.lastMove = `For ${from}, selected ${option}`
+  }
+
   receiveFromParent(message: string) {
     this.receivedFromParent = message
   }

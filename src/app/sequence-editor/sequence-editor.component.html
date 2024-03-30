@@ -23,7 +23,13 @@
   (cdkDropListDropped)="drop($event)"
 >
   <tr *ngFor="let item of otherItems" cdkDrag>
-    <td cdkDragHandle>{{ item }}</td>
+    <td cdkDragHandle>{{ item }}
+      <select (change)="select($event, item)">
+        <option></option>
+        <option>First</option>
+        <option>Second</option>
+      </select>
+    </td>
   </tr>
 </table>
 <div>{{ lastMove }}</div>
