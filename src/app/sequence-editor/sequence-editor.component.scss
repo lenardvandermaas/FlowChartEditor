@@ -1,7 +1,48 @@
 [cdkDragHandle] {
-	cursor:pointer
+  cursor:pointer
 }
 
 [cdkDragHandle]:hover {
   color: red
+}
+
+th div {
+  float: left
+}
+
+th button {
+  float: right
+}
+
+thead th {
+  writing-mode: vertical-lr;
+  text-align: end;
+}
+
+.even {
+  background-color: #ffffff;
+}
+
+.odd {
+  background-color: #e0e0e0;
+}
+
+.doubleOdd {
+  background-color: #d0d0d0
+}
+
+td {
+  padding-left: 4px;
+  padding-right: 3px;
+}
+
+.edgeMark {
+  color: green;
+  width: 10px;
+  height: 10px;
+  border: 1px solid
+}
+
+.hasEdge {
+  background-color: green;
 }

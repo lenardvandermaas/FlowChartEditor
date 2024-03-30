@@ -1,36 +1,35 @@
-<p>Available</p>
-
-<table
-  cdkDropList
-  id="available"
-  cdkDropListData="available"
-  cdkDropListConnectedTo="omitted"
-  (cdkDropListDropped)="drop($event)"
->
-  <tr *ngFor="let row of items" cdkDrag>
-    <td cdkDragHandle>{{ row[0] }}</td>
-    <td>{{ row[1] }}</td>
-  </tr>
-</table>
-
-<p>Omitted</p>
-
-<table
-  cdkDropList
-  id="omitted"
-  cdkDropListData="omitted"
-  cdkDropListConnectedTo="available"
-  (cdkDropListDropped)="drop($event)"
->
-  <tr *ngFor="let item of otherItems" cdkDrag>
-    <td cdkDragHandle>{{ item }}
-      <select (change)="select($event, item)">
-        <option></option>
-        <option>First</option>
-        <option>Second</option>
-      </select>
+<table cdkDropList (cdkDropListDropped)="drop($event)">
+  <thead>
+    <th></th>
+    <th *ngFor="let headerCell of view.header" [ngClass]="getClass(headerCell)">
+      {{ headerCell.nodeId === null ? "\<empty\>" : headerCell.nodeId}}
+    </th>
+  </thead>
+  <tr *ngFor="let row of view.body" cdkDrag>
+    <th [ngClass]="getClass(row.header)">
+      <div *ngIf="row.header.nodeId === null">
+        <select (change)="select($event, row.header.position)" cdkDragHandle>
+          <option></option>
+          <option *ngFor="let option of row.header.fillOptions">{{ option }}</option>
+        </select>
+      </div>
+      <div *ngIf="row.header.nodeId !== null">
+        <div cdkDragHandle>{{ row.header.nodeId }}</div>
+        <button (click)="omit(row.header.position)">X</button>
+      </div>
+    </th>
+    <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)">
+      <div
+        *ngIf=
+          "cell.fromAndToHaveNode && (cell.fromPosition !== cell.toPosition)"
+        [ngClass]="{
+          'edgeMark': true,
+          'hasEdge': cell.hasEdge ? true : undefined
+        }"></div>
     </td>
   </tr>
 </table>
+<p></p>
 <div>{{ lastMove }}</div>
+<p></p>
 <div>{{ receivedFromParent }}</div>
