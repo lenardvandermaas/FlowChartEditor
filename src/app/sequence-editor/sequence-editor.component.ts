@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
+import { NodeSequenceEditor, NodeSequenceEditorCell } from '../model/nodeSequenceEditor';
+import { getRange } from '../util/util';
 
 @Component({
   selector: 'app-sequence-editor',
@@ -25,167 +27,42 @@ export class SequenceEditorComponent {
   //
   // We have omitted N1
   //
-  view: View = {
-    header: [
-      {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: []},
-      {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"]},
-      {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: []},
-      {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: []}
-    ],
-    body: [
-      {
-        header: {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: []},
-        cells: [
-          {
-            fromPosition: 0,
-            toPosition: 0,
-            backgroundClass: BackgroundClass.EVEN,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          },
-          {
-            fromPosition: 0,
-            toPosition: 1,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 0,
-            toPosition: 2,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: true,
-            hasEdge: true
-          },
-          {
-            fromPosition: 0,
-            toPosition: 3,
-            backgroundClass: BackgroundClass.EVEN,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          }
-        ]
-      },
-      {
-        header: {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"]},
-        cells: [
-          {
-            fromPosition: 1,
-            toPosition: 0,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 1,
-            toPosition: 1,
-            backgroundClass: BackgroundClass.DOUBLE_ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 1,
-            toPosition: 2,
-            backgroundClass: BackgroundClass.DOUBLE_ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 1,
-            toPosition: 3,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          }
-        ]
-      },
-      {
-        header: {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: []},
-        cells: [
-          {
-            fromPosition: 2,
-            toPosition: 0,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          },
-          {
-            fromPosition: 2,
-            toPosition: 1,
-            backgroundClass: BackgroundClass.DOUBLE_ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 2,
-            toPosition: 2,
-            backgroundClass: BackgroundClass.DOUBLE_ODD,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          },
-          {
-            fromPosition: 2,
-            toPosition: 3,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: true,
-            hasEdge: true
-          }
-        ]
-      },
-      {
-        header: {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: []},
-        cells: [
-          {
-            fromPosition: 3,
-            toPosition: 0,
-            backgroundClass: BackgroundClass.EVEN,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          },
-          {
-            fromPosition: 3,
-            toPosition: 1,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: false,
-            hasEdge: false
-          },
-          {
-            fromPosition: 3,
-            toPosition: 2,
-            backgroundClass: BackgroundClass.ODD,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          },
-          {
-            fromPosition: 3,
-            toPosition: 3,
-            backgroundClass: BackgroundClass.EVEN,
-            fromAndToHaveNode: true,
-            hasEdge: false
-          }
-        ]
-      }
-    ]
-  }
+  view: View = this.getEmptyView()
 
   lastMove = ''
 
-  receivedFromParent = 'Not yet set'
+  model: NodeSequenceEditor | null = null
+
+  getEmptyView(): View {
+    return {
+      header: [],
+      body: []
+    }
+  }
 
   drop($event: CdkDragDrop<string>) {
-    const indexFrom = $event.previousIndex
-    const indexTo = $event.currentIndex
-    this.lastMove = `From ${indexFrom} to ${indexTo}`
+    if (this.model !== null) {
+      const indexFrom = $event.previousIndex
+      const indexTo = $event.currentIndex
+      this.model.rotateToSwap(indexFrom, indexTo)
+      this.view = this.getView(this.model!)
+    }
   };
 
   omit(position: number) {
-    this.lastMove = `Omit node at position ${position}`
+    if (this.model !== null) {
+      this.model!.omitNodeFrom(position)
+      this.view = this.getView(this.model)
+    }
   }
 
   select($event: Event, position: number) {
-    const target = $event.target as HTMLSelectElement
-    const option: string = target.value
-    this.lastMove = `Reintroduce ${option} at position ${position}`
+    if (this.model !== null) {
+      const target = $event.target as HTMLSelectElement
+      const option: string = target.value
+      this.model!.reintroduceNode(position, this.model.getNodeById(option)!)
+      this.view = this.getView(this.model)
+    }
   }
 
   getClass(item: Position | Cell) {
@@ -198,12 +75,65 @@ export class SequenceEditorComponent {
     }
   }
 
-  receiveFromParent(message: string) {
-    this.receivedFromParent = message
+  receiveModel(model: NodeSequenceEditor) {
+    console.log('Receive model')
+    this.model = model
+    this.view = this.getView(this.model)
+  }
+
+  getView(model: NodeSequenceEditor): View {
+    return {
+      header: getRange(0, model.getSequence().length)
+        .map(index => this.getPosition(index, model)),
+      body: getRange(0, model.getSequence().length)
+        .map(indexFrom => {
+          return {
+            header: this.getPosition(indexFrom, model),
+            cells: getRange(0, model.getSequence().length)
+              .map(indexTo => {
+                return this.getCell(indexFrom, indexTo, model)
+              })
+          }
+        })
+    }
+  }
+
+  private getPosition(index: number, model: NodeSequenceEditor): Position {
+    const node = model.getSequence()[index]
+    return {
+      position: index,
+      nodeId: node === null ? null : node.getId()!,
+      backgroundClass: model.getLayerOfPosition(index) % 2 === 1 ? BackgroundClass.ODD : BackgroundClass.EVEN,
+      fillOptions: node !== null ? [] : model.getOrderedOmittedNodesInLayer(model.getLayerOfPosition(index)).map(omitted => omitted.getId())
+    }
+  }
+
+  private getCell(indexFrom: number, indexTo: number, model: NodeSequenceEditor): Cell {
+    const modelCell: NodeSequenceEditorCell = model.getCell(indexFrom, indexTo)
+    let numOddLayers = 0
+    if (modelCell.getLayerFrom() % 2 == 1) {
+      ++numOddLayers
+    }
+    if (modelCell.getLayerTo() % 2 == 1) {
+      ++numOddLayers
+    }
+    let bgClass: BackgroundClass = BackgroundClass.EVEN
+    if (numOddLayers == 1) {
+      bgClass = BackgroundClass.ODD
+    } else if(numOddLayers == 2) {
+      bgClass = BackgroundClass.DOUBLE_ODD
+    }
+    return {
+      fromPosition: indexFrom,
+      toPosition: indexTo,
+      backgroundClass: bgClass,
+      fromAndToHaveNode: (model.getSequence()[indexFrom] !== null) && (model.getSequence()[indexTo] !== null),
+      hasEdge: modelCell.getEdgeIfConnected() !== null
+    }
   }
 }
 
-interface View {
+export interface View {
   header: Position[],
   body: BodyRow[]
 }
@@ -228,7 +158,7 @@ interface Cell {
   hasEdge: boolean
 }
 
-enum BackgroundClass {
+export enum BackgroundClass {
   EVEN = "even",
   ODD = "odd",
   DOUBLE_ODD = "doubleOdd"
