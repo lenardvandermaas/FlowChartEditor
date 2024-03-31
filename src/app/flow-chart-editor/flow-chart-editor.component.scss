@@ -13,3 +13,15 @@ textarea {
   width: 250px;
   height: 150px
 }
+
+button {
+  background-color: lightgray
+}
+
+button:hover {
+  background-color: gray
+}
+
+button:active {
+  transform: translateY(6px)
+}
