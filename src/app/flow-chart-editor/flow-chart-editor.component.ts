@@ -30,14 +30,14 @@ export class FlowChartEditorComponent {
     try {
       b = this.mermaidParseService.getGraph(this.mermaidText)
     } catch(e) {
-      console.log(e)
+      alert('Invalid mermaid text:' + (e as Error).message)
       return
     }
     const g: Graph = new GraphConnectionsDecorator(b)
     const layerMap: Map<string, number> = calculateLayerNumbers(g)
     const builder: NodeSequenceEditorBuilder = new NodeSequenceEditorBuilder(layerMap, g)
     if (builder.orderedOmittedNodes.length > 0) {
-      console.log(`Could not assign a layer to nodes: ${builder.orderedOmittedNodes.map(n => n.getId())}`)
+      alert('Could not assign a layer to the following nodes: ' + builder.orderedOmittedNodes.map(n => n.getId()).join(', '))
       return
     }
     console.log('Pass model to SequenceEditorComponent')
