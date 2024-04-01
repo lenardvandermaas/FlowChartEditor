@@ -5,18 +5,26 @@ export type SizeFunction = (index: number) => number
 export type PredecessorXFunction = (index: number) => number[]
 
 export class XCoordCalculation {
+  // I wanted to use readonly, but then I could not set this in the run() method
+  private _finalAreaGroups: AreaGroup[] | null = null
+
   constructor(
     private numPositions: number,
     private sizeFunction: SizeFunction,
     private predecessorXFunction: PredecessorXFunction) {}
 
-  /*
+  // Return null if run() was not executed
+  get finalAreaGroups(): AreaGroup[] | null {
+    return this._finalAreaGroups
+  }
+
   run(): number[] {
     let areaGroups: AreaGroup[] = getRange(0, this.numPositions).map(p => this.getAreaGroup([p]))
-    let conflictCandidates = areaGroups.map(g => Conflict.createFromAreaGroup(g))
-    let initialNumConflictGroups: number
+    let conflictCandidates
+    let previousNumConflicts: number
     do {
-      initialNumConflictGroups = conflictCandidates.length
+      conflictCandidates = areaGroups.map(g => Conflict.createFromAreaGroup(g))
+      previousNumConflicts = conflictCandidates.length
       conflictCandidates.sort((a, b) => a.area.minValue - b.area.minValue)
       conflictCandidates = this.joinSortedConflicts(conflictCandidates)
       // At this point, we have Conflict objects that are spatially disjoint
@@ -24,11 +32,12 @@ export class XCoordCalculation {
       conflictCandidates = this.joinSortedConflicts(conflictCandidates)
       // The Conflict objects are disjoint by planned sequence indexes
       areaGroups = conflictCandidates.map(c => this.getAreaGroup(c.positions))
-    } while (conflictCandidates.length < initialNumConflictGroups)
+    } while (conflictCandidates.length < previousNumConflicts)
     areaGroups.sort((a, b) => a.area.minValue - b.area.minValue)
+    this._finalAreaGroups = areaGroups
+    this.checkIndexesAreOrderedAsIntended()
     return areaGroups.flatMap(g => this.getXPositionsOfAreaGroup(g))
   }
-  */
 
   getAreaGroup(positions: number[]) {
     const center: number = roundedMedian(sortedUniqNumbers(
@@ -44,9 +53,9 @@ export class XCoordCalculation {
         result.push(Conflict.copyFrom(ic))
         return
       }
-      let lastConflict = result[-1]
+      let lastConflict = result[result.length - 1]
       if (positionAreasConflict(lastConflict, ic)) {
-        result[-1] = lastConflict.toMerged(ic)
+        result[result.length - 1] = lastConflict.toMerged(ic)
       } else {
         result.push(Conflict.copyFrom(ic))
       }
@@ -59,10 +68,41 @@ export class XCoordCalculation {
     let offsetX: number = areaGroup.area.minValue
     areaGroup.positions.forEach(p => {
       const theSize: number = this.sizeFunction(p)
-      result.push(offsetX + Math.floor(theSize / 2))
+      result.push(Interval.createFromMinSize(offsetX, theSize).center)
       offsetX += theSize
     })
     return result
+  }
+
+  private checkIndexesAreOrderedAsIntended() {
+    const groupsPositions = this.finalAreaGroups!.map(g => g.positions)
+    if (groupsPositions.flat().length != this.numPositions) {
+      throw new Error('Final area groups yield different positions then are in the layer')
+    }
+    XCoordCalculation.checkGroupsPositionsAreAsIntended(groupsPositions)
+  }
+
+  static checkGroupsPositionsAreAsIntended(groupsPositions: number[][]) {
+    for (let index = 0; index < groupsPositions.length; ++index) {
+      XCoordCalculation.checkPositionsAreConsecutive(groupsPositions[index], index)
+      if (index > 0) {
+        const positionsOfPrev = groupsPositions[index-1]
+        const positionsOfCur = groupsPositions[index]
+        if ( (positionsOfCur[0] - positionsOfPrev[positionsOfPrev.length-1]) !== 1) {
+          throw new Error(`Adjacent final area groups have incompatible positions ${positionsOfPrev} and ${positionsOfCur}`)
+        }
+      }
+    }
+  }
+
+  static checkPositionsAreConsecutive(positions: number[], areaGroupIndex: number) {
+    if(positions.length > 1) {
+      for(let i = 1; i < positions.length; ++i) {
+        if ( (positions[i] - positions[i-1]) !== 1) {
+          throw new Error(`Positions in final area group ${areaGroupIndex} are not consecutive: ${positions}`)
+        }
+      }
+    }
   }
 }
 
@@ -93,7 +133,6 @@ export class AreaGroup implements AbstractPositionsArea {
     return Interval.createFrom(this.positions)
   }
 }
-
 
 class Conflict implements AbstractPositionsArea {
   constructor(

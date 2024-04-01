@@ -69,3 +69,103 @@ function xCoordCalculation(sizes: number[], predecessorXCoords: Map<number, numb
     p => predecessorXCoords.get(p)!
   )
 }
+
+describe('XCoordCalculation integration', () => {
+  it('If positions of area groups are consecutive, then no error', () => {
+    let caught = false
+    // Wrapping this inside try-catch has no other aim then showing in Karma that
+    // this test has expectations
+    try {
+      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [3, 4]])
+    } catch(e) {
+      caught = true
+    }
+    expect(caught).toBe(false)
+  })
+
+  it('If positions in first area group are not consecutive, then error', () => {
+    let caught = false
+    try {
+      XCoordCalculation.checkGroupsPositionsAreAsIntended([[2, 0, 1], [3, 4]])
+    } catch(e) {
+      caught = true
+    }
+    expect(caught).toBe(true)
+  })
+
+  it('If positions in second area group are not consecutive, then error', () => {
+    let caught = false
+    try {
+      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 3]])
+    } catch(e) {
+      caught = true
+    }
+    expect(caught).toBe(true)
+  })
+
+  it('If positions in adjacent area groups do not align, then error', () => {
+    let caught = false
+    try {
+      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 5]])
+    } catch(e) {
+      caught = true
+    }
+    expect(caught).toBe(true)
+  })
+
+  it('If no conflict, then positions calculated from predecessors taken', () => {
+    const xCalc = xCoordCalculation([25, 25, 25, 25], new Map([
+      [0, [100]],
+      [1, [200]],
+      [2, [300]],
+      [3, [400]]
+    ]))
+    const positions = xCalc.run()
+    expect(positions).toEqual([100, 200, 300, 400])
+  })
+
+  it('If only part of layer conflicts, other positions are not affected', () => {
+    const xCalc = xCoordCalculation([25, 25, 25], new Map([
+      [0, [200]],
+      [1, [100]],
+      [2, [300]]
+    ]))
+    const positions = xCalc.run()
+    // First two center around median of 150, size 25 takes effect 
+    expect(positions).toEqual([137, 162, 300])
+  })
+
+  it('Two disjoint conflicts do not interfere', () => {
+    const xCalc = xCoordCalculation([25, 25, 25, 25], new Map([
+      [0, [200]],
+      [1, [100]],
+      [2, [400]],
+      [3, [300]]
+    ]))
+    const positions = xCalc.run()
+    expect(positions).toEqual([137, 162, 337, 362])
+  })
+
+  it('Sorting by area does not reveal this conflict, but it should be seen by sorting on index', () => {
+    const xCalc = xCoordCalculation([25, 25, 25, 25], new Map([
+      [0, [200]],
+      [1, [300]],
+      [2, [400]],
+      [3, [100]]
+    ]))
+    const positions = xCalc.run()
+    expect(positions).toEqual([212, 237, 262, 287])
+  })
+
+  it('Big conflict does not necessarily jack up other parts of the layer', () => {
+    const xCalc = xCoordCalculation([25, 25, 25, 25, 25], new Map([
+      [0, [100]],
+      [1, [300]],
+      [2, [400]],
+      [3, [500]],
+      [4, [200]]
+    ]))
+    const positions = xCalc.run()
+    expect(positions).toEqual([100, 312, 337, 362, 387])
+  })
+})
