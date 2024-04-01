@@ -1,4 +1,4 @@
-import { getRange, roundedMedian } from './util'
+import { getRange, roundedMedian, sortedUniqNumbers } from './util'
 
 describe('Util test', () => {
   it('Get range', () => {
@@ -46,5 +46,16 @@ describe('Util test', () => {
 
   it('Median of two elements', () => {
     expect(roundedMedian([3, 5])).toBe(4)
+  })
+
+  it('sortedUniqNumbers', () => {
+    expect(sortedUniqNumbers([])).toEqual([])
+    expect(sortedUniqNumbers([3])).toEqual([3])
+    const input = [3, 4, 3]
+    expect(sortedUniqNumbers(input)).toEqual([3, 4])
+    // Test that original input is not sorted
+    expect(input).toEqual([3, 4, 3])
+    expect(sortedUniqNumbers([4, 3, 3])).toEqual([3, 4])
+    expect(sortedUniqNumbers([3, 3, 4])).toEqual([3, 4])
   })
 })

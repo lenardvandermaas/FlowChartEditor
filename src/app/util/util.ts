@@ -28,3 +28,17 @@ export function roundedMedian(arg: number[]): number {
     return argSorted[mid]
   }
 }
+
+export function sortedUniqNumbers(arg: number[]) {
+  const argSorted = [... arg].sort((a, b) => a - b)
+  const result: number[] = []
+  argSorted.forEach(n => {
+    // The internet documents that you can index arrays with negative
+    // indexes to count from the end of the array.
+    // The unit tests failed when I tried to apply that here.
+    if ( (result.length == 0) || (n !== result[result.length - 1])) {
+      result.push(n)
+    }
+  })
+  return result
+}
