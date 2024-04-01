@@ -4,7 +4,7 @@ describe('Interval', () => {
   it('Creating invalid interval fails', () => {
     let caught = false
     try {
-      new Interval(4, 3)
+      Interval.createFromMinMax(4, 3)
     } catch(e) {
       caught = true
     }
@@ -12,13 +12,13 @@ describe('Interval', () => {
   })
 
   it('Can create interval with minValue == maxValue', () => {
-    const interval = new Interval(2, 2)
+    const interval = Interval.createFromMinMax(2, 2)
     expect(interval.minValue).toBe(2)
     expect(interval.maxValue).toBe(2)
   })
 
   it('Can create normal interval', () => {
-    const interval = new Interval(2, 3)
+    const interval = Interval.createFromMinMax(2, 3)
     expect(interval.minValue).toBe(2)
     expect(interval.maxValue).toBe(3)
   })
@@ -46,20 +46,39 @@ describe('Interval', () => {
   })
 
   it('Interval.before works as expected', () => {
-    expect(new Interval(1, 2).before(new Interval(3, 4))).toBe(true)
-    expect(new Interval(3, 4).before(new Interval(1, 2))).toBe(false)
-    expect(new Interval(2, 3).before(new Interval(3, 4))).toBe(false)
-    expect(new Interval(3, 4).before(new Interval(2, 3))).toBe(false)
-    expect(new Interval(1, 5).before(new Interval(2, 3))).toBe(false)
-    expect(new Interval(2, 3).before(new Interval(1, 5))).toBe(false)
+    expect(Interval.createFromMinMax(1, 2).before(Interval.createFromMinMax(3, 4))).toBe(true)
+    expect(Interval.createFromMinMax(3, 4).before(Interval.createFromMinMax(1, 2))).toBe(false)
+    expect(Interval.createFromMinMax(2, 3).before(Interval.createFromMinMax(3, 4))).toBe(false)
+    expect(Interval.createFromMinMax(3, 4).before(Interval.createFromMinMax(2, 3))).toBe(false)
+    expect(Interval.createFromMinMax(1, 5).before(Interval.createFromMinMax(2, 3))).toBe(false)
+    expect(Interval.createFromMinMax(2, 3).before(Interval.createFromMinMax(1, 5))).toBe(false)
   })
 
   it('Interval.toJoined works as expected', () => {
-    expect(new Interval(1, 2).toJoined(new Interval(3, 4))).toEqual(new Interval(1, 4))
-    expect(new Interval(3, 4).toJoined(new Interval(1, 2))).toEqual(new Interval(1, 4))
-    expect(new Interval(2, 3).toJoined(new Interval(3, 4))).toEqual(new Interval(2, 4))
-    expect(new Interval(3, 4).toJoined(new Interval(2, 3))).toEqual(new Interval(2, 4))
-    expect(new Interval(1, 5).toJoined(new Interval(2, 3))).toEqual(new Interval(1, 5))
-    expect(new Interval(2, 3).toJoined(new Interval(1, 5))).toEqual(new Interval(1, 5))
+    expect(Interval.createFromMinMax(1, 2).toJoined(Interval.createFromMinMax(3, 4))).toEqual(Interval.createFromMinMax(1, 4))
+    expect(Interval.createFromMinMax(3, 4).toJoined(Interval.createFromMinMax(1, 2))).toEqual(Interval.createFromMinMax(1, 4))
+    expect(Interval.createFromMinMax(2, 3).toJoined(Interval.createFromMinMax(3, 4))).toEqual(Interval.createFromMinMax(2, 4))
+    expect(Interval.createFromMinMax(3, 4).toJoined(Interval.createFromMinMax(2, 3))).toEqual(Interval.createFromMinMax(2, 4))
+    expect(Interval.createFromMinMax(1, 5).toJoined(Interval.createFromMinMax(2, 3))).toEqual(Interval.createFromMinMax(1, 5))
+    expect(Interval.createFromMinMax(2, 3).toJoined(Interval.createFromMinMax(1, 5))).toEqual(Interval.createFromMinMax(1, 5))
+  })
+
+  it('Relating minValue, maxValue and size', () => {
+    // Interval has two elements
+    expect(Interval.createFromMinMax(3, 4).size).toBe(2)
+    expect(Interval.createFromMinSize(3, 2).maxValue).toBe(4)
+    expect(Interval.createFromMinMax(6, 8).size).toBe(3)
+    expect(Interval.createFromMinSize(6, 3).maxValue).toBe(8)
+  })
+
+  it('Relating center, size, minValue and maxValue', () => {
+    // Check for odd interval size
+    expect(Interval.createFromMinMax(150, 250).size).toBe(101)
+    expect(Interval.createFromMinMax(150, 250).center).toBe(200)
+    expect(Interval.createFromCenterSize(200, 101)).toEqual(Interval.createFromMinMax(150, 250))
+    // Check for even interval size
+    expect(Interval.createFromMinMax(150, 249).size).toBe(100)
+    expect(Interval.createFromMinMax(150, 249).center).toBe(200)
+    expect(Interval.createFromCenterSize(200, 100)).toEqual(Interval.createFromMinMax(150, 249))
   })
 })
