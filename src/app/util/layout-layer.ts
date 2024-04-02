@@ -49,16 +49,13 @@ export class XCoordCalculation {
   private joinSortedConflicts(inputConflicts: Conflict[]): Conflict[] {
     let result: Conflict[] = []
     inputConflicts.forEach(ic => {
-      if (result.length == 0) {
-        result.push(Conflict.copyFrom(ic))
-        return
+      let icCopy: Conflict = Conflict.copyFrom(ic)
+      // When we have enlarged the last conflict, it may become
+      // in conflict with the previous conflict in array result.
+      while ( (result.length > 0) && positionAreasConflict(result[result.length - 1], icCopy) ) {
+        icCopy = result.pop()!.toMerged(icCopy)
       }
-      let lastConflict = result[result.length - 1]
-      if (positionAreasConflict(lastConflict, ic)) {
-        result[result.length - 1] = lastConflict.toMerged(ic)
-      } else {
-        result.push(Conflict.copyFrom(ic))
-      }
+      result.push(Conflict.copyFrom(icCopy))
     })
     return result
   }
