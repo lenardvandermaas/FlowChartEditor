@@ -1,3 +1,4 @@
+import { FlowChartEditorComponent } from './flow-chart-editor/flow-chart-editor.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
@@ -77,7 +78,7 @@ interface AppState {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, FormsModule, ReactiveFormsModule, RxPush],
+  imports: [FlowChartEditorComponent, CommonModule, RouterOutlet, FormsModule, ReactiveFormsModule, RxPush],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   providers: [RxState]
