@@ -16,6 +16,7 @@ export enum UpdateResponse {
 type OptionalString = string | null
 
 export interface NodeSequenceEditor {
+  getNodeById(id: string): Node | undefined
   getNumLayers(): number
   getLayerOfPosition(position: number): number
   getLayerOfNode(node: Node): number
@@ -83,6 +84,10 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
         throw new Error('There are empty layers, not supported')
       }
     })
+  }
+
+  getNodeById(id: string): Node | undefined {
+    return this.graph.getNodeById(id)
   }
 
   getNumLayers(): number {
