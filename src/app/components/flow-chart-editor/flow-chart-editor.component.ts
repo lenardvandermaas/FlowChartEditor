@@ -1,9 +1,9 @@
 import { Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
-import { MermaidParserService } from '../service/mermaid-parser.service';
-import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph';
-import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../model/horizontalGrouping';
+import { MermaidParserService } from '../../service/mermaid-parser.service';
+import { GraphBase, Graph, GraphConnectionsDecorator } from '../../model/graph';
+import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
 
 @Component({
   selector: 'app-flow-chart-editor',

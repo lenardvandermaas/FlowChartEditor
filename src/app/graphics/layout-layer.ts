@@ -1,5 +1,5 @@
-import { Interval } from "./interval"
-import { getRange, roundedMedian, sortedUniqNumbers } from "./util"
+import { Interval } from "../util/interval"
+import { getRange, roundedMedian, sortedUniqNumbers } from "../util/util"
 
 export type SizeFunction = (index: number) => number
 export type PredecessorXFunction = (index: number) => number[]

@@ -1,4 +1,4 @@
-import { FlowChartEditorComponent } from './flow-chart-editor/flow-chart-editor.component';
+import { FlowChartEditorComponent } from './components/flow-chart-editor/flow-chart-editor.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
