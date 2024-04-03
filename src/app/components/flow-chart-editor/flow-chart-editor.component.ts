@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
-import { MermaidParserService } from '../../service/mermaid-parser.service';
+import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../../model/graph';
 import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
 
@@ -10,12 +10,9 @@ import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/ho
   standalone: true,
   imports: [ SequenceEditorComponent, FormsModule ],
   templateUrl: './flow-chart-editor.component.html',
-  styleUrl: './flow-chart-editor.component.scss',
-  providers: [ MermaidParserService ]
+  styleUrl: './flow-chart-editor.component.scss'
 })
 export class FlowChartEditorComponent {
-  constructor(private mermaidParseService: MermaidParserService) {}
-
   mermaidText: string = ''
 
   @ViewChild(SequenceEditorComponent)
@@ -28,7 +25,7 @@ export class FlowChartEditorComponent {
     }
     let b: GraphBase
     try {
-      b = this.mermaidParseService.getGraph(this.mermaidText)
+      b = getGraphFromMermaid(this.mermaidText)
     } catch(e) {
       alert('Invalid mermaid text:' + (e as Error).message)
       return

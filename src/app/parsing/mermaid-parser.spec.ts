@@ -1,26 +1,13 @@
-import { TestBed } from '@angular/core/testing';
-
-import { MermaidParserService } from './mermaid-parser.service';
+import { getGraphFromMermaid } from './mermaid-parser';
 import { ConcreteNode, Node, ConcreteEdge, Edge, GraphConnectionsDecorator, Graph } from '../model/graph'
 
-describe('MermaidParserService', () => {
-  let service: MermaidParserService;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(MermaidParserService);
-  });
-
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
+describe('Parse Mermaid', () => {
   it('Simple node definition', () => {
     const input = `
 flowchart
     d2e2("<b>Test1</b><br/>JavaListener"):::normal
   `
-    const result = service.getGraph(input)
+    const result = getGraphFromMermaid(input)
     expect(result.getNodes().length).toEqual(1)
     expect((result.getNodes()[0] as ConcreteNode).sequence).toEqual(0)
     expect(result.getNodes()[0].getId()).toEqual('d2e2')
@@ -34,7 +21,7 @@ d2e2("<b>Test1</b><br/>JavaListener"):::normal
 d2e12("<b>InputValidator</b>"):::normal
 d2e2 --> |success| d2e12
     `
-    const result = service.getGraph(input)
+    const result = getGraphFromMermaid(input)
     expect(result.getNodes().length).toEqual(2)
     expect((result.getNodes()[0] as ConcreteNode).sequence).toEqual(0)
     expect((result.getNodes()[1] as ConcreteNode).sequence).toEqual(1)
@@ -71,7 +58,7 @@ d2e2 --> |success| d2e12
     N3 --> |success| N2
     N3 --> |success| End
 `
-    let base = service.getGraph(input)
+    let base = getGraphFromMermaid(input)
     let g = new GraphConnectionsDecorator(base)
     checkNodePointsTo("Start", ["N1", "N2"], g)
     checkNodeReachedFrom("Start", [], g)

@@ -1,18 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 
-import { MermaidParserService } from './mermaid-parser.service';
+import { getGraphFromMermaid } from './mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph'
 import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason } from '../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../model/nodeSequenceEditor';
 
 describe('Integration', () => {
-  let service: MermaidParserService;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(MermaidParserService);
-  });
-
   it('Read Mermaid text and create NodeSequenceEditor', () => {
     const input: string = `
 flowchart
@@ -29,7 +22,7 @@ N2 --> |success| End
 X1 --> |success| X2
 X2 --> |success| X1
 `
-    const b: GraphBase = service.getGraph(input)
+    const b: GraphBase = getGraphFromMermaid(input)
     // For each node, summarize incoming and outgoing edges
     const g: Graph = new GraphConnectionsDecorator(b)
     // Calculate the layer numbers
