@@ -1,5 +1,5 @@
 import { XCoordCalculation, AreaGroup } from "./layout-layer";
-import { Interval } from "./interval";
+import { Interval } from "../util/interval";
 
 describe('XCoordCalculation AreaGroup', () => {
   it('Single predecessor aligns vertically', () => {

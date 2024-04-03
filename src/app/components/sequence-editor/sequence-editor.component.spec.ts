@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SequenceEditorComponent, View, BackgroundClass } from './sequence-editor.component';
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../model/nodeSequenceEditor';
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../../model/nodeSequenceEditor';
 
-import { ConcreteGraphBase } from '../model/graph';
+import { ConcreteGraphBase } from '../../model/graph';
 describe('SequenceEditorComponent', () => {
   let component: SequenceEditorComponent;
   let fixture: ComponentFixture<SequenceEditorComponent>;

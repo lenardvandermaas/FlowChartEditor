@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
-import { NodeSequenceEditor, NodeSequenceEditorCell } from '../model/nodeSequenceEditor';
-import { getRange } from '../util/util';
+import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
+import { getRange } from '../../util/util';
 
 @Component({
   selector: 'app-sequence-editor',
