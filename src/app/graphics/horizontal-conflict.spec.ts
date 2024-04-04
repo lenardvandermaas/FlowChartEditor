@@ -1,7 +1,7 @@
-import { XCoordCalculation, AreaGroup } from "./layout-layer";
+import { HorizontalConflictResolver, AreaGroup } from "./horizontal-conflict";
 import { Interval } from "../util/interval";
 
-describe('XCoordCalculation AreaGroup', () => {
+describe('HorizontalConflictResolver AreaGroup', () => {
   it('Single predecessor aligns vertically', () => {
     const xCalc = xCoordCalculation([50], new Map([
       [0, [150]]
@@ -62,21 +62,21 @@ describe('XCoordCalculation AreaGroup', () => {
   })
 })
 
-function xCoordCalculation(sizes: number[], predecessorXCoords: Map<number, number[]>): XCoordCalculation {
-  return new XCoordCalculation(
+function xCoordCalculation(sizes: number[], predecessorXCoords: Map<number, number[]>): HorizontalConflictResolver {
+  return new HorizontalConflictResolver(
     sizes.length,
     p => sizes[p],
     p => predecessorXCoords.get(p)!
   )
 }
 
-describe('XCoordCalculation integration', () => {
+describe('HorizontalConflictResolver integration', () => {
   it('If positions of area groups are consecutive, then no error', () => {
     let caught = false
     // Wrapping this inside try-catch has no other aim then showing in Karma that
     // this test has expectations
     try {
-      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [3, 4]])
+      HorizontalConflictResolver.checkGroupsPositionsAreAsIntended([[0, 1, 2], [3, 4]])
     } catch(e) {
       caught = true
     }
@@ -86,7 +86,7 @@ describe('XCoordCalculation integration', () => {
   it('If positions in first area group are not consecutive, then error', () => {
     let caught = false
     try {
-      XCoordCalculation.checkGroupsPositionsAreAsIntended([[2, 0, 1], [3, 4]])
+      HorizontalConflictResolver.checkGroupsPositionsAreAsIntended([[2, 0, 1], [3, 4]])
     } catch(e) {
       caught = true
     }
@@ -96,7 +96,7 @@ describe('XCoordCalculation integration', () => {
   it('If positions in second area group are not consecutive, then error', () => {
     let caught = false
     try {
-      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 3]])
+      HorizontalConflictResolver.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 3]])
     } catch(e) {
       caught = true
     }
@@ -106,7 +106,7 @@ describe('XCoordCalculation integration', () => {
   it('If positions in adjacent area groups do not align, then error', () => {
     let caught = false
     try {
-      XCoordCalculation.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 5]])
+      HorizontalConflictResolver.checkGroupsPositionsAreAsIntended([[0, 1, 2], [4, 5]])
     } catch(e) {
       caught = true
     }
