@@ -1,10 +1,11 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
 import { FrankFlowchartComponent } from '../frank-flowchart/frank-flowchart.component';
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../../model/graph';
 import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
+import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 
 @Component({
   selector: 'app-flow-chart-editor',
@@ -16,15 +17,9 @@ import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/ho
 export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
-
-  @ViewChild(SequenceEditorComponent)
-  sequenceEditor: SequenceEditorComponent | undefined
+  layoutModel: NodeSequenceEditor | null = null
 
   loadMermaid() {
-    console.log('Loading mermaid')
-    if (this.sequenceEditor === undefined) {
-      console.log('ERROR: sequenceEditor not initialized')
-    }
     let b: GraphBase
     try {
       b = getGraphFromMermaid(this.mermaidText)
@@ -40,6 +35,6 @@ export class FlowChartEditorComponent {
       return
     }
     console.log('Pass model to SequenceEditorComponent')
-    this.sequenceEditor!.receiveModel(builder.build())
+    this.layoutModel = builder.build()
   }
 }

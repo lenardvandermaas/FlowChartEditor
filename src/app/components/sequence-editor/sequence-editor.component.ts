@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
 import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
@@ -12,26 +12,23 @@ import { getRange } from '../../util/util';
   styleUrl: './sequence-editor.component.scss'
 })
 export class SequenceEditorComponent {
-  // This should represent the following graph:
-  //
-  //   Start => N1
-  //   Start => N2
-  //   N1 => End
-  //   N2 => End
-  //
-  // This should have three layers:
-  //
-  //   layer 0: Start
-  //   layer 1: N1, N2
-  //   layer 2: End
-  //
-  // We have omitted N1
-  //
   view: View = this.getEmptyView()
 
-  lastMove = ''
+  private _model: NodeSequenceEditor | null = null
 
-  model: NodeSequenceEditor | null = null
+  get model(): NodeSequenceEditor | null {
+    return this._model
+  }
+
+  @Input()
+  set model(model: NodeSequenceEditor | null) {
+    this._model = model
+    if (this.model === null) {
+      this.view = this.getEmptyView()
+    } else {
+      this.view = this.getView(model!)
+    }
+  }
 
   getEmptyView(): View {
     return {
@@ -73,12 +70,6 @@ export class SequenceEditorComponent {
     } else {
       return {'doubleOdd': true}
     }
-  }
-
-  receiveModel(model: NodeSequenceEditor) {
-    console.log('Receive model')
-    this.model = model
-    this.view = this.getView(this.model)
   }
 
   getView(model: NodeSequenceEditor): View {
