@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
+import { FrankFlowchartComponent } from '../frank-flowchart/frank-flowchart.component';
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../../model/graph';
 import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
@@ -8,12 +9,13 @@ import { calculateLayerNumbers, NodeSequenceEditorBuilder } from '../../model/ho
 @Component({
   selector: 'app-flow-chart-editor',
   standalone: true,
-  imports: [ SequenceEditorComponent, FormsModule ],
+  imports: [ SequenceEditorComponent, FrankFlowchartComponent, FormsModule ],
   templateUrl: './flow-chart-editor.component.html',
   styleUrl: './flow-chart-editor.component.scss'
 })
 export class FlowChartEditorComponent {
   mermaidText: string = ''
+  zoomInput: number = 100
 
   @ViewChild(SequenceEditorComponent)
   sequenceEditor: SequenceEditorComponent | undefined
