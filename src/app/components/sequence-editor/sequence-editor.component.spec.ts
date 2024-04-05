@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SequenceEditorComponent, View, BackgroundClass } from './sequence-editor.component';
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../../model/nodeSequenceEditor';
 
-import { ConcreteGraphBase } from '../../model/graph';
+import { ConcreteGraphBase, GraphConnectionsDecorator } from '../../model/graph';
+
 describe('SequenceEditorComponent', () => {
   let component: SequenceEditorComponent;
   let fixture: ComponentFixture<SequenceEditorComponent>;
@@ -39,7 +40,7 @@ describe('SequenceEditorComponent', () => {
       ['N2', 1],
       ['End', 2]
     ])
-    const model: NodeSequenceEditor = new ConcreteNodeSequenceEditor(b, m)
+    const model: NodeSequenceEditor = new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(b), m)
     model.omitNodeFrom(1)
     const actual: View = component.getView(model)
     const expected = getTheView()
