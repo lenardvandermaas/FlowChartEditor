@@ -5,7 +5,7 @@
 // Managing how to choose the sequence of nodes within a layer is also
 // supported here.
 
-import { Node, Edge, GraphBase, getEdgeKey, OptionalNode, OptionalEdge } from './graph'
+import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph } from './graph'
 import { getRange } from '../util/util'
 
 export enum UpdateResponse {
@@ -17,6 +17,11 @@ type OptionalString = string | null
 
 export interface NodeSequenceEditor {
   getNodeById(id: string): Node | undefined
+  getEdges(): readonly Edge[]
+  getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
+  getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
+  getSuccessors(nodeId: string): readonly Node[]
+  getPredecessors(nodeId: string): readonly Node[]
   getNumLayers(): number
   getLayerOfPosition(position: number): number
   getLayerOfNode(node: Node): number
@@ -47,7 +52,7 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
 
   constructor(
     // Not modified, no need to copy
-    readonly graph: GraphBase,
+    readonly graph: Graph,
     nodeIdToLayer: Map<string, number>
   ) {
     // Copy the map
@@ -90,8 +95,32 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     return this.graph.getNodeById(id)
   }
 
+  getEdges(): readonly Edge[] {
+    return this.graph.getEdges()
+  }
+
   getNumLayers(): number {
     return this.layerStartPositions.length
+  }
+
+  getOrderedEdgesStartingFrom(startId: string): readonly Edge[] {
+    this.checkNodeId(startId)
+    return this.graph.getOrderedEdgesStartingFrom(this.getNodeById(startId)!)
+  }
+
+  getOrderedEdgesLeadingTo(endId: string): readonly Edge[] {
+    this.checkNodeId(endId)
+    return this.graph.getOrderedEdgesLeadingTo(this.getNodeById(endId)!)
+  }
+
+  getSuccessors(nodeId: string): readonly Node[] {
+    this.checkNodeId(nodeId)
+    return this.graph.getSuccessors(this.getNodeById(nodeId)!)
+  }
+
+  getPredecessors(nodeId: string): readonly Node[] {
+    this.checkNodeId(nodeId)
+    return this.graph.getPredecessors(this.getNodeById(nodeId)!)
   }
 
   getLayerOfPosition(position: number): number {
@@ -255,6 +284,12 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
   private checkNode(node: Node) {
     if (this.graph.getNodeById(node.getId()) === undefined) {
       throw Error(`Invalid node provided, id is ${node.getId()}`)
+    }
+  }
+
+  private checkNodeId(id: string) {
+    if (this.graph.getNodeById(id) === undefined) {
+      throw Error(`Invalid node id provided, id is ${id}`)
     }
   }
 }

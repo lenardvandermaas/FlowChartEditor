@@ -4,10 +4,10 @@ version.
 
 <h1 New version></h1>
 
-<table>
+<table id="top">
   <tr>
     <td>
-      <label>Mermaid input</label>
+      <h2>Mermaid input</h2>
       <textarea [(ngModel)]="mermaidText"></textarea>      
     </td>
     <td>
@@ -16,6 +16,33 @@ version.
   </tr>
 </table>
 
-<app-sequence-editor id="sequenceEditor"></app-sequence-editor>
+<table id="bottom">
+  <tr>
+    <td>
+      <h2>Sequence editor</h2>
+      <div class="boundary">
+        <app-sequence-editor [model]="layoutModel" (onChanged)="onSequenceEditorChanged()"></app-sequence-editor>
+      </div>
+    </td>
+    <td id="drawing">
+      <table id="above-drawing">
+        <tr>
+          <td><h2>Layout</h2></td>
+          <td>
+            <div id="slider-container">
+              <input type="range" min="25" max="200" class="slider" [(ngModel)]="zoomInput">
+            </div>
+          </td>
+          <td>
+            <div id="zoomPerc">{{ zoomInput + "%" }}</div>
+          </td>
+        </tr>
+      </table>
+      <div id="drawing-area" class="boundary">
+        <app-frank-flowchart id="frankFlowChart" [zoom]="zoomInput" [drawing]="drawing"></app-frank-flowchart>
+      </div>
+    </td>
+  </tr>
+</table>
 
 <h1 End of new version></h1>

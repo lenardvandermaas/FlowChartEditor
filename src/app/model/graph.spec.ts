@@ -31,15 +31,15 @@ describe('Graph test', () => {
   })
 
   function checkNodePointsTo(fromId: string, toIds: string[], g: Graph) {
-    let from: Node = g.getNodeById(fromId)!
-    let toEdges: readonly Edge[] = g.getOrderedEdgesStartingFrom(from)
-    expect(toEdges.map(edge => edge.getTo()).map(n => n.getId())).toEqual(toIds)
+    const from: Node = g.getNodeById(fromId)!
+    const successors: readonly Node[] = g.getSuccessors(from)
+    expect(successors.map(n => n.getId())).toEqual(toIds)
   }
 
   function checkNodeReachedFrom(toId: string, fromIds: string[], g: Graph) {
     let to: Node = g.getNodeById(toId)!
-    let fromEdges: readonly Edge[] = g.getOrderedEdgesLeadingTo(to)
-    expect(fromEdges.map(edge => edge.getFrom()).map(n => n.getId())).toEqual(fromIds)
+    let predecessors: readonly Node[] = g.getPredecessors(to)
+    expect(predecessors.map(n => n.getId())).toEqual(fromIds)
   }
 
   function newNode(id: string, g: ConcreteGraphBase) {

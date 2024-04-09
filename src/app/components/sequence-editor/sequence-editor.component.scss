@@ -1,39 +1,32 @@
 [cdkDragHandle] {
-  cursor:pointer
+  cursor:pointer;
 }
 
 [cdkDragHandle]:hover {
-  color: red
+  color: red;
 }
 
-th div {
-  float: left
-}
-
-th button {
-  float: right
+table {
+  border-spacing: 0px;
+  overflow: clip;
 }
 
 thead th {
   writing-mode: vertical-lr;
-  text-align: end;
-}
-
-.even {
-  background-color: #ffffff;
+  vertical-align: bottom;
 }
 
 .odd {
-  background-color: #e0e0e0;
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .doubleOdd {
-  background-color: #d0d0d0
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 td {
-  padding-left: 4px;
-  padding-right: 3px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .edgeMark {
@@ -45,4 +38,40 @@ td {
 
 .hasEdge {
   background-color: green;
+}
+
+.placeholder {
+  padding-top: 30px
+}
+
+.row-header-omitted>select {
+  width: 100%;
+
+  option {
+    color: black;
+  }
+}
+
+.row-header-present {
+  display: flex;
+  justify-content: space-between;
+}
+
+td, thead>th:not(:first-child) {
+  position: relative;
+}
+
+tr:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+td:hover::before, thead>th:not(:first-child):hover::before {
+  position: absolute;
+  left: 0;
+  top: -300vh;
+  height: 300vw;
+  width: 100%;
+  z-index: -1;
+  content: "";
+  background-color: rgba(0, 0, 0, 0.1);
 }

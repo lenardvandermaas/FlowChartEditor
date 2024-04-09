@@ -1,5 +1,5 @@
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
-import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase  } from "./graph"
+import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator  } from "./graph"
 
 function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
@@ -17,7 +17,7 @@ function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
     ['3D', 1],
     ['2E', 0]
   ])
-  return new ConcreteNodeSequenceEditor(g, m)
+  return new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(g), m)
 }
 
 function newTestNode(id: string): Node {
@@ -31,7 +31,7 @@ function newEdge(nodeFrom: Node, nodeTo: Node): Edge {
 function getSimpleInstance(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
   addEdgesToSimple(g)
-  return new ConcreteNodeSequenceEditor(g, simpleNodeToLayerMap())
+  return new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(g), simpleNodeToLayerMap())
 }
 
 function addEdgesToSimple(g: ConcreteGraphBase) {
@@ -73,7 +73,7 @@ describe('NodeSequenceEditor', () => {
   function expectInstanceCreationFails(g: GraphBase, m: Map<string, number>) {
     let caught = false
     try {
-      new ConcreteNodeSequenceEditor(g, m)  
+      new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(g), m)  
     } catch(e) {
       caught = true
     }

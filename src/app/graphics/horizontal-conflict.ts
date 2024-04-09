@@ -4,7 +4,7 @@ import { getRange, roundedMedian, sortedUniqNumbers } from "../util/util"
 export type SizeFunction = (index: number) => number
 export type PredecessorXFunction = (index: number) => number[]
 
-export class XCoordCalculation {
+export class HorizontalConflictResolver {
   // I wanted to use readonly, but then I could not set this in the run() method
   private _finalAreaGroups: AreaGroup[] | null = null
 
@@ -76,12 +76,12 @@ export class XCoordCalculation {
     if (groupsPositions.flat().length != this.numPositions) {
       throw new Error('Final area groups yield different positions then are in the layer')
     }
-    XCoordCalculation.checkGroupsPositionsAreAsIntended(groupsPositions)
+    HorizontalConflictResolver.checkGroupsPositionsAreAsIntended(groupsPositions)
   }
 
   static checkGroupsPositionsAreAsIntended(groupsPositions: number[][]) {
     for (let index = 0; index < groupsPositions.length; ++index) {
-      XCoordCalculation.checkPositionsAreConsecutive(groupsPositions[index], index)
+      HorizontalConflictResolver.checkPositionsAreConsecutive(groupsPositions[index], index)
       if (index > 0) {
         const positionsOfPrev = groupsPositions[index-1]
         const positionsOfCur = groupsPositions[index]

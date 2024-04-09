@@ -1,0 +1,23 @@
+<svg *ngIf="drawing !== null" class="svg" xmlns="http://www.w3.org/2000/svg"
+    [attr.width]="calcZoom(drawing.width)" [attr.height]="calcZoom(drawing.height)">
+  <g *ngFor="let rectangle of drawing.rectangles">
+    <rect
+      [attr.x]="calcZoom(rectangle.x)"
+      [attr.y]="calcZoom(rectangle.y)"
+      [attr.width]="calcZoom(rectangle.width)"
+      [attr.height]="calcZoom(rectangle.height)"
+      id="rectangle.id"
+      [ngClass]="getRectangleClass(rectangle)">
+    </rect>
+    <text
+      [attr.x]="calcZoom(rectangle.centerX)"
+      [attr.y]="calcZoom(rectangle.centerY)"
+      text-anchor="middle" dominant-baseline="middle" class="nodeText">
+      {{rectangle.text}}
+    </text>
+  </g>
+  <polyline *ngFor="let line of drawing.lines"
+    attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}" 
+    id="line.id"
+    [ngClass]="getLineClass(line)"/>
+</svg>

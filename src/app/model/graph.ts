@@ -10,6 +10,8 @@ export interface GraphBase {
 export interface Graph extends GraphBase {
   getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[]
   getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[]
+  getSuccessors(node: Node): readonly Node[]
+  getPredecessors(node: Node): readonly Node[]
 }
 
 export class ConcreteGraphBase implements GraphBase {
@@ -122,6 +124,14 @@ export class GraphConnectionsDecorator implements Graph {
 
   getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[] {
     return this.leadingTo!.get(endNode.getId())!
+  }
+
+  getSuccessors(node: Node): readonly Node[] {
+    return this.getOrderedEdgesStartingFrom(node).map(edge => edge.getTo())
+  }
+
+  getPredecessors(node: Node): readonly Node[] {
+    return this.getOrderedEdgesLeadingTo(node).map(edge => edge.getFrom())
   }
 }
 

@@ -1,4 +1,4 @@
-import { Node, Graph, GraphBase, Edge, ConcreteGraphBase, OptionalNode } from './graph'
+import { Node, Graph, GraphBase, Edge, ConcreteGraphBase, GraphConnectionsDecorator } from './graph'
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from './nodeSequenceEditor'
 import { getRange } from '../util/util'
 
@@ -141,7 +141,7 @@ export class NodeSequenceEditorBuilder {
   }
 
   build(): NodeSequenceEditor {
-    return new ConcreteNodeSequenceEditor(this.graph, this.nodeIdToLayer)
+    return new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(this.graph), this.nodeIdToLayer)
   }
 }
 
