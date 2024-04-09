@@ -69,6 +69,8 @@ export class FlowChartEditorComponent {
     const layout = new Layout(nodeLayout, this.layoutModel!, dimensions)
     const rectangles: Rectangle[] = layout.getNodes()
       .map(n => n as PlacedNode)
+      // No box around intermediate node
+      .filter(n => n.creationReason === CreationReason.ORIGINAL)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
         text: n.optionalText === null ? '' : n.optionalText}})
