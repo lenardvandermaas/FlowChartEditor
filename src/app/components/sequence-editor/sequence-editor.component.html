@@ -7,13 +7,13 @@
   </thead>
   <tr *ngFor="let row of view.body" cdkDrag>
     <th [ngClass]="getClass(row.header)">
-      <div *ngIf="row.header.nodeId === null">
+      <div class="row-header-omitted" *ngIf="row.header.nodeId === null">
         <select (change)="select($event, row.header.position)" cdkDragHandle>
           <option></option>
           <option *ngFor="let option of row.header.fillOptions">{{ option }}</option>
         </select>
       </div>
-      <div *ngIf="row.header.nodeId !== null">
+      <div class="row-header-present" *ngIf="row.header.nodeId !== null">
         <div cdkDragHandle>{{ row.header.nodeId }}</div>
         <button (click)="omit(row.header.position)">X</button>
       </div>
