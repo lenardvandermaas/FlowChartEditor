@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
-import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
-import { Observable } from 'rxjs';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-frank-flowchart',
@@ -12,7 +10,7 @@ import { Observable } from 'rxjs';
 })
 export class FrankFlowchartComponent {
   @Input() zoom: number = 100
-  @Input() drawing: Drawing | null = null
+  @Input() drawing: Drawing = getEmptyDrawing()
 
   calcZoom(coord: number): number {
     return coord * this.zoom / 100
@@ -67,4 +65,13 @@ export interface Line {
   y1: number
   x2: number
   y2: number
+}
+
+export function getEmptyDrawing(): Drawing {
+  return  {
+    width: 0,
+    height: 0,
+    rectangles: [],
+    lines: []
+  }
 }

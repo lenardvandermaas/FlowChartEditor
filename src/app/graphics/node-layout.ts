@@ -23,6 +23,7 @@ export interface NodeLayout {
 
 export interface Position {
   readonly node: Node
+  readonly layerNumber: number
   x: number | null
   y: number | null
   preds: number[]
@@ -62,7 +63,7 @@ export class NodeLayoutBuilder {
     this.model.getSequenceInLayer(layerNumber).forEach(optionalNode => {
       console.log(`Cursor is at ${cursor}`)
       if (optionalNode != null) {
-        const position = this.createPosition(optionalNode, cursor)
+        const position = this.createPosition(optionalNode, cursor, layerNumber)
         console.log(`Position created for node ${position.node.getId()} at ${position.preds[0]}`)
         positions.push(position)
         idToPosition.set(position.node.getId(), position)
@@ -73,10 +74,11 @@ export class NodeLayoutBuilder {
     return {positions, idToPosition, initialWidth, layerNumber}
   }
 
-  private createPosition(node: Node, startX: number): Position {
+  private createPosition(node: Node, startX: number, layerNumber: number): Position {
     const defaultX = Interval.createFromMinSize(startX, this.widthOf(node)).center
     return {
       node,
+      layerNumber,
       x: null,
       y: null,
       preds: [defaultX]

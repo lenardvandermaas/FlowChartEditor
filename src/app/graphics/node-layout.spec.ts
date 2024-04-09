@@ -10,6 +10,7 @@ describe('NodeLayoutBuilder', () => {
     const layout: NodeLayout = instance.run()
     // Check that the original graph is represented correctly in the positions
     expect(layout.positions.map(p => p.node.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    expect(layout.positions.map(p => p.layerNumber)).toEqual([0, 1, 1, 2])
     expect(layout.positionMap.get('Start')!.node.getId()).toBe('Start')
     expect(layout.positionMap.get('N1')!.node.getId()).toBe('N1')
     expect(layout.positionMap.get('N2')!.node.getId()).toBe('N2')
@@ -29,6 +30,7 @@ describe('NodeLayoutBuilder', () => {
     const layout: NodeLayout = instance.run()
     // Check that the original graph is represented correctly in the positions
     expect(layout.positions.map(p => p.node.getId())).toEqual(['Start', 'N2', 'End'])
+    expect(layout.positions.map(p => p.layerNumber)).toEqual([0, 1, 2])
     expect(layout.positionMap.get('Start')!.node.getId()).toBe('Start')
     expect(layout.positionMap.has('N1')).toBe(false)
     expect(layout.positionMap.get('N2')!.node.getId()).toBe('N2')
@@ -50,6 +52,7 @@ describe('NodeLayoutBuilder', () => {
     const layout = instance.run()
     // Check that the graph is represented correctly
     expect(layout.positions.map(p => p.node.getId())).toEqual(['S1', 'S2', 'N1', 'intermediate1', 'End'])
+    expect(layout.positions.map(p => p.layerNumber)).toEqual([0, 0, 1, 1, 2])
     expect(layout.positionMap.get('S1')!.node.getId()).toBe('S1')
     expect(layout.positionMap.get('S2')!.node.getId()).toBe('S2')
     expect(layout.positionMap.get('N1')!.node.getId()).toBe('N1')
