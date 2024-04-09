@@ -38,6 +38,7 @@ export class FlowChartEditorComponent {
   zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
   drawing: Drawing = getEmptyDrawing()
+  numCrossingLines: number = 0
 
   loadMermaid() {
     let b: GraphBase
@@ -67,8 +68,11 @@ export class FlowChartEditorComponent {
     const builder = new NodeLayoutBuilder(this.layoutModel!, dimensions)
     const nodeLayout = builder.run()
     const layout = new Layout(nodeLayout, this.layoutModel!, dimensions)
+    this.numCrossingLines = layout.getNumCrossingLines()
     const rectangles: Rectangle[] = layout.getNodes()
       .map(n => n as PlacedNode)
+      // No box around intermediate node
+      .filter(n => n.creationReason === CreationReason.ORIGINAL)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
         text: n.optionalText === null ? '' : n.optionalText}})

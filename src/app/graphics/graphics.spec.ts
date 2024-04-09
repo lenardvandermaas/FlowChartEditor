@@ -31,6 +31,12 @@ describe('Point tests', () => {
     expect(actual.x).toBe(2*5*5)
     expect(actual.y).toBe(0)
   })
+
+  it('equals', () => {
+    expect(new Point(2, 3).equals(new Point(2, 3))).toBe(true)
+    expect(new Point(2, 3).equals(new Point(3, 2))).toBe(false)
+    expect(new Point(2, 3).equals(new Point(3, 3))).toBe(false)
+  })
 })
 
 describe('Line tests', () => {

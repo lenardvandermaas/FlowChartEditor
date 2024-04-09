@@ -50,4 +50,14 @@ export class Interval {
   toJoined(other: Interval): Interval {
     return new Interval(Math.min(this.minValue, other.minValue), Math.max(this.maxValue, other.maxValue))
   }
+
+  toIntersected(other: Interval): Interval | null {
+    const minValue = Math.max(this.minValue, other.minValue)
+    const maxValue = Math.min(this.maxValue, other.maxValue)
+    if (minValue > maxValue) {
+      return null
+    } else {
+      return new Interval(minValue, maxValue)
+    }
+  }
 }

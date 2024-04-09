@@ -2,7 +2,7 @@ import { ConcreteEdge, ConcreteGraphBase, ConcreteNode, Edge, GraphBase, Node, O
 import { CreationReason, EdgeForEditor, NodeForEditor, OriginalNode } from "../model/horizontalGrouping";
 import { NodeSequenceEditor } from "../model/nodeSequenceEditor";
 import { Interval } from "../util/interval";
-import { Line, Point } from "./graphics";
+import { Line, LineRelation, Point, relateLines } from "./graphics";
 import { NodeLayout, NodeSpacingDimensions, Position } from "./node-layout";
 
 export interface Dimensions extends NodeSpacingDimensions {
@@ -152,5 +152,39 @@ export class Layout implements GraphBase {
 
   getEdgeByKey(key: string): Edge | undefined {
     return this.delegate.getEdgeByKey(key)
+  }
+
+  getNumCrossingLines(): number {
+    const edges: PlacedEdge[] = this.getEdges().map(edge => edge as PlacedEdge)
+    let result = 0
+    edges.forEach((_, indexFirst) => {
+      edges.forEach((_, indexSecond) => {
+        if (indexSecond > indexFirst) {
+          const layerSpanFirst = Interval.createFromMinMax(edges[indexFirst].minLayerNumber, edges[indexFirst].maxLayerNumber)
+          const layerSpanSecond = Interval.createFromMinMax(edges[indexSecond].minLayerNumber, edges[indexSecond].maxLayerNumber)
+          const intersection: Interval | null = layerSpanFirst.toIntersected(layerSpanSecond)
+          if ( (intersection !== null) && (intersection.size >= 2) ) {
+            if (this.edgesCross(edges[indexFirst], edges[indexSecond])) {
+              ++result
+            }  
+          }
+        }
+      })
+    })
+    return result
+  }
+
+  private edgesCross(first: PlacedEdge, second: PlacedEdge): boolean {
+    let linesTouch = false
+    const firstPoints: Point[] = [first.line.startPoint, first.line.endPoint]
+    const secondPoints: Point[] = [second.line.startPoint, second.line.endPoint]
+    firstPoints.forEach(p1 => {
+      secondPoints.forEach(p2 => {
+        if (p1.equals(p2)) {
+          linesTouch = true
+        }
+      })
+    })
+    return (! linesTouch) && (relateLines(first.line, second.line) === LineRelation.CROSS)
   }
 }
