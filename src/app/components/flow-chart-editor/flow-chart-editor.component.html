@@ -21,7 +21,7 @@ version.
     <td>
       <h2>Sequence editor</h2>
       <div class="boundary">
-        <app-sequence-editor [model]="layoutModel"></app-sequence-editor>
+        <app-sequence-editor [model]="layoutModel" (onChanged)="onSequenceEditorChanged()"></app-sequence-editor>
       </div>
     </td>
     <td id="drawing">
@@ -39,7 +39,7 @@ version.
         </tr>
       </table>
       <div id="drawing-area" class="boundary">
-        <app-frank-flowchart id="frankFlowChart" [zoom]="zoomInput"></app-frank-flowchart>
+        <app-frank-flowchart id="frankFlowChart" [zoom]="zoomInput" [drawing]="drawing"></app-frank-flowchart>
       </div>
     </td>
   </tr>

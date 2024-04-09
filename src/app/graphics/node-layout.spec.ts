@@ -1,7 +1,7 @@
 import { ConcreteGraphBase, Graph, GraphConnectionsDecorator } from "../model/graph"
 import { NodeSequenceEditorBuilder } from "../model/horizontalGrouping"
 import { ConcreteNodeSequenceEditor, NodeSequenceEditor } from "../model/nodeSequenceEditor"
-import { Dimensions, NodeLayout, NodeLayoutBuilder } from "./node-layout"
+import { NodeSpacingDimensions, NodeLayout, NodeLayoutBuilder } from "./node-layout"
 
 describe('NodeLayoutBuilder', () => {
   it('Simple model', () => {
@@ -87,7 +87,7 @@ describe('NodeLayoutBuilder', () => {
   })
 })
 
-function getTestDimensions(): Dimensions {
+function getTestDimensions(): NodeSpacingDimensions {
   return {
     nodeWidth: 120,
     intermediateWidth: 60,

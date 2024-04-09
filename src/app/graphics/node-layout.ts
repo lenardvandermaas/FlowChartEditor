@@ -6,7 +6,7 @@ import { Node } from "../model/graph";
 import { getRange, sortedUniqNumbers } from "../util/util";
 import { HorizontalConflictResolver } from "./horizontal-conflict";
 
-export interface Dimensions {
+export interface NodeSpacingDimensions {
   nodeWidth: number
   intermediateWidth: number
   omittedPlaceholderWidth: number
@@ -40,7 +40,7 @@ export class NodeLayoutBuilder {
 
   constructor(
     private model: NodeSequenceEditor,
-    private dimensions: Dimensions
+    private dimensions: NodeSpacingDimensions
   ) {}
 
   run(): NodeLayout {

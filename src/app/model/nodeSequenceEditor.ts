@@ -17,6 +17,7 @@ type OptionalString = string | null
 
 export interface NodeSequenceEditor {
   getNodeById(id: string): Node | undefined
+  getEdges(): readonly Edge[]
   getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
   getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
   getSuccessors(nodeId: string): readonly Node[]
@@ -92,6 +93,10 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
 
   getNodeById(id: string): Node | undefined {
     return this.graph.getNodeById(id)
+  }
+
+  getEdges(): readonly Edge[] {
+    return this.graph.getEdges()
   }
 
   getNumLayers(): number {

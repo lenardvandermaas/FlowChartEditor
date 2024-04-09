@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-frank-flowchart',
@@ -10,12 +12,14 @@ import { Component, Input, } from '@angular/core';
 })
 export class FrankFlowchartComponent {
   @Input() zoom: number = 100
+  @Input() drawing: Drawing | null = null
 
   calcZoom(coord: number): number {
     return coord * this.zoom / 100
   }
 
   // TODO: Remove test data and make this an input
+  /*
   drawing: Drawing | null = {
     width: 200,
     height: 300,
@@ -26,6 +30,7 @@ export class FrankFlowchartComponent {
       {id: "line1", x1: 100, y1: 150, x2: 100, y2: 250}
     ]
   }
+  */
 
   getRectangleClass(rectangle: Rectangle): string[] {
     // TODO: Implement
@@ -38,14 +43,14 @@ export class FrankFlowchartComponent {
   }
 }
 
-interface Drawing {
+export interface Drawing {
   width: number
   height: number
   rectangles: Rectangle[]
   lines: Line[]
 }
 
-interface Rectangle {
+export interface Rectangle {
   id: string
   x: number
   y: number
@@ -56,7 +61,7 @@ interface Rectangle {
   text: string
 }
 
-interface Line {
+export interface Line {
   id: string
   x1: number
   y1: number

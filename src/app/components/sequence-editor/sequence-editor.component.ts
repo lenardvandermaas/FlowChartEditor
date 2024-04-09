@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
 import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
@@ -37,12 +37,16 @@ export class SequenceEditorComponent {
     }
   }
 
+  @Output()
+  onChanged: EventEmitter<any> = new EventEmitter<any>()
+
   drop($event: CdkDragDrop<string>) {
     if (this.model !== null) {
       const indexFrom = $event.previousIndex
       const indexTo = $event.currentIndex
       this.model.rotateToSwap(indexFrom, indexTo)
       this.view = this.getView(this.model!)
+      this.onChanged.emit(true)
     }
   };
 
@@ -50,6 +54,7 @@ export class SequenceEditorComponent {
     if (this.model !== null) {
       this.model!.omitNodeFrom(position)
       this.view = this.getView(this.model)
+      this.onChanged.emit(true)
     }
   }
 
@@ -59,6 +64,7 @@ export class SequenceEditorComponent {
       const option: string = target.value
       this.model!.reintroduceNode(position, this.model.getNodeById(option)!)
       this.view = this.getView(this.model)
+      this.onChanged.emit(true)
     }
   }
 
