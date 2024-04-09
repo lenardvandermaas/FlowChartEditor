@@ -5,7 +5,7 @@ import { Interval } from "../util/interval";
 import { Line, Point } from "./graphics";
 import { NodeLayout, NodeSpacingDimensions, Position } from "./node-layout";
 
-interface Dimensions extends NodeSpacingDimensions {
+export interface Dimensions extends NodeSpacingDimensions {
   nodeBoxWidth: number
   nodeBoxHeight: number
 }
@@ -26,8 +26,13 @@ export class PlacedNode implements Node {
     this.optionalText = optionalOriginalNode === null ? null : optionalOriginalNode.text
     this.originalStyle = optionalOriginalNode === null ? null : optionalOriginalNode.style
     this.layerNumber = p.layerNumber
-    this.horizontalBox = Interval.createFromCenterSize(p.x!, d.nodeBoxWidth)
-    this.verticalBox = Interval.createFromCenterSize(p.y!, d.nodeBoxHeight)
+    if (this.creationReason === CreationReason.ORIGINAL) {
+      this.horizontalBox = Interval.createFromCenterSize(p.x!, d.nodeBoxWidth)
+      this.verticalBox = Interval.createFromCenterSize(p.y!, d.nodeBoxHeight)  
+    } else {
+      this.horizontalBox = Interval.createFromCenterSize(p.x!, 1)
+      this.verticalBox = Interval.createFromCenterSize(p.y!, 1)  
+    }
   }
 
   getId() {
