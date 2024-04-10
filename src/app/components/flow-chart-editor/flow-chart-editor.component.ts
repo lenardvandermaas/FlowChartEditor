@@ -8,6 +8,7 @@ import { calculateLayerNumbers, CreationReason, NodeSequenceEditorBuilder } from
 import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
+import { DimensionsEditorComponent } from '../dimensions-editor/dimensions-editor.component';
 
 export interface Dimensions extends NodeSpacingDimensions {
   nodeBoxWidth: number
@@ -32,7 +33,7 @@ const dimensions: Dimensions = {
 @Component({
   selector: 'app-flow-chart-editor',
   standalone: true,
-  imports: [ SequenceEditorComponent, FrankFlowchartComponent, FormsModule ],
+  imports: [ SequenceEditorComponent, FrankFlowchartComponent, DimensionsEditorComponent, FormsModule ],
   templateUrl: './flow-chart-editor.component.html',
   styleUrl: './flow-chart-editor.component.scss'
 })
