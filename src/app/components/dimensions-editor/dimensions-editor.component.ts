@@ -1,7 +1,12 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { Dimensions } from '../flow-chart-editor/flow-chart-editor.component';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
+import { NodeSpacingDimensions } from '../../graphics/node-layout';
+
+export interface Dimensions extends NodeSpacingDimensions {
+  nodeBoxWidth: number
+  nodeBoxHeight: number
+}
 
 @Component({
   selector: 'app-dimensions-editor',
@@ -31,11 +36,11 @@ export class DimensionsEditorComponent {
   toFactory() {
     this.editDimensions = getFactoryDimensions()
     this.lastPosted = getFactoryDimensions()
-    this.onDimensions.emit(this.lastPosted)
+    this.onDimensions.emit({ ... this.lastPosted })
   }
 }
 
-function getFactoryDimensions(): Dimensions {
+export function getFactoryDimensions(): Dimensions {
   return {
     layerHeight: 50,
     layerDistance: 120,

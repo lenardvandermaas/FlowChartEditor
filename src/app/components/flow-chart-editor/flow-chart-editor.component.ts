@@ -8,26 +8,11 @@ import { calculateLayerNumbers, CreationReason, NodeSequenceEditorBuilder } from
 import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
-import { DimensionsEditorComponent } from '../dimensions-editor/dimensions-editor.component';
-
-export interface Dimensions extends NodeSpacingDimensions {
-  nodeBoxWidth: number
-  nodeBoxHeight: number
-}
+import { Dimensions, DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
 
 export interface NodeSequenceEditorOrError {
   model: NodeSequenceEditor | null
   error: string | null
-}
-
-const dimensions: Dimensions = {
-  layerHeight: 50,
-  layerDistance: 120,
-  nodeBoxHeight: 40,
-  intermediateWidth: 60,
-  nodeWidth: 120,
-  omittedPlaceholderWidth: 90,
-  nodeBoxWidth: 110,
 }
 
 @Component({
@@ -41,6 +26,7 @@ export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
+  dimensions = getFactoryDimensions()
   drawing: Drawing = getEmptyDrawing()
   numCrossingLines: number = 0
 
@@ -75,7 +61,7 @@ export class FlowChartEditorComponent {
   }
 
   updateDrawing() {
-    const layout = FlowChartEditorComponent.model2layout(this.layoutModel!, dimensions)
+    const layout = FlowChartEditorComponent.model2layout(this.layoutModel!, this.dimensions)
     this.numCrossingLines = layout.getNumCrossingLines()
     const rectangles: Rectangle[] = layout.getNodes()
       .map(n => n as PlacedNode)
@@ -96,6 +82,11 @@ export class FlowChartEditorComponent {
   static model2layout(model: NodeSequenceEditor, inDimensions: Dimensions): Layout {
     const builder = new NodeLayoutBuilder(model, inDimensions)
     const nodeLayout = builder.run()
-    return new Layout(nodeLayout, model, dimensions)
+    return new Layout(nodeLayout, model, inDimensions)
+  }
+
+  onNewDimensions(d: Dimensions) {
+    this.dimensions = d
+    this.updateDrawing()
   }
 }
