@@ -4,6 +4,7 @@ import { getGraphFromMermaid } from './mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph'
 import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason } from '../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../model/nodeSequenceEditor';
+import { Dimensions, FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
 
 describe('Integration', () => {
   it('Read Mermaid text and create NodeSequenceEditor', () => {
@@ -47,4 +48,54 @@ X2 --> |success| X1
     expect(editor.getNumLayers()).toBe(3)
     expect(editor.getSequence().map(n => n?.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
   })
+
+  // Test was created by feeding the mermaid text to the GUI and checking
+  // the number of crossing lines visually.
+  it('Read Mermaid text and find 1 crossing line', () => {
+    const modelOrError = FlowChartEditorComponent.mermaid2model(getTestMermaid())
+    if (modelOrError.error !== null) {
+      throw new Error(modelOrError.error)
+    }
+    const model = modelOrError.model!
+    expect(model.getSequence().map(n => n?.getId())).toEqual(['Start', 'N1', 'intermediate1', 'N2', 'intermediate2', 'End'])
+    expect(FlowChartEditorComponent.model2layout(model, getTestDimensions()).getNumCrossingLines()).toBe(1)
+  })
+
+  it('Adjust model of previous test to have no crossing lines anymore', () => {
+    const modelOrError = FlowChartEditorComponent.mermaid2model(getTestMermaid())
+    if (modelOrError.error !== null) {
+      throw new Error(modelOrError.error)
+    }
+    const model = modelOrError.model!
+    model.rotateToSwap(2, 1)
+    expect(model?.getSequence().map(n => n?.getId())).toEqual(['Start', 'intermediate1', 'N1', 'N2', 'intermediate2', 'End'])
+    expect(FlowChartEditorComponent.model2layout(model, getTestDimensions()).getNumCrossingLines()).toBe(0)
+  })
 })
+
+function getTestMermaid(): string {
+  return `
+    flowchart
+    Start("Start"):::normal
+    N1("N1"):::normal
+    N2("N2"):::normal
+    End("End"):::normal
+    Start --> |success| N1
+    Start --> |success| N2
+    N1 --> |success| N2
+    N1 --> |success| End
+    N2 --> |success| End
+`
+}
+
+function getTestDimensions(): Dimensions {
+  return {
+    layerHeight: 50,
+    layerDistance: 120,
+    nodeBoxHeight: 40,
+    intermediateWidth: 60,
+    nodeWidth: 120,
+    omittedPlaceholderWidth: 90,
+    nodeBoxWidth: 110,
+  }
+}
