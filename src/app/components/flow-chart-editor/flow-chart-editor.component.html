@@ -8,10 +8,22 @@ version.
   <tr>
     <td>
       <h2>Mermaid input</h2>
-      <textarea [(ngModel)]="mermaidText"></textarea>      
+      <textarea [(ngModel)]="mermaidText"></textarea>
     </td>
     <td>
       <button (click)="loadMermaid()">Load</button>
+    </td>
+    <td>
+      <table id="values">
+        <tr>
+          <td>
+            <div>
+              <app-dimensions-editor (onDimensions)="onNewDimensions($event)"/>
+              <div id="numCrossingLines">Num crossing lines: {{ numCrossingLines }} </div>
+            </div>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>

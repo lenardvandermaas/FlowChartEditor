@@ -29,6 +29,10 @@ export class Point {
     readonly x: number,
     readonly y: number) {}
 
+  equals(other: Point): boolean {
+    return (this.x == other.x) && (this.y == other.y)
+  }
+
   rotateOtherBackAndMultiplyByMyLength(other: Point): Point {
     const newX = this.x * other.x + this.y * other.y;
     const newY = -this.y * other.x + this.x * other.y;

@@ -63,6 +63,15 @@ describe('Interval', () => {
     expect(Interval.createFromMinMax(2, 3).toJoined(Interval.createFromMinMax(1, 5))).toEqual(Interval.createFromMinMax(1, 5))
   })
 
+  it('Interval.toIntersected works as expected', () => {
+    expect(Interval.createFromMinMax(1, 2).toIntersected(Interval.createFromMinMax(3, 4))).toEqual(null)
+    expect(Interval.createFromMinMax(3, 4).toIntersected(Interval.createFromMinMax(1, 2))).toEqual(null)
+    expect(Interval.createFromMinMax(2, 3).toIntersected(Interval.createFromMinMax(3, 4))).toEqual(Interval.createFromMinMax(3, 3))
+    expect(Interval.createFromMinMax(3, 4).toIntersected(Interval.createFromMinMax(2, 3))).toEqual(Interval.createFromMinMax(3, 3))
+    expect(Interval.createFromMinMax(1, 5).toIntersected(Interval.createFromMinMax(2, 3))).toEqual(Interval.createFromMinMax(2, 3))
+    expect(Interval.createFromMinMax(2, 3).toIntersected(Interval.createFromMinMax(1, 5))).toEqual(Interval.createFromMinMax(2, 3))
+  })
+
   it('Relating minValue, maxValue and size', () => {
     // Interval has two elements
     expect(Interval.createFromMinMax(3, 4).size).toBe(2)
