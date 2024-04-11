@@ -13,7 +13,7 @@ export interface Dimensions extends NodeSpacingDimensions {
 export class PlacedNode implements Node {
   private id: string
   readonly creationReason: CreationReason
-  readonly optionalText: string | null
+  readonly text: string
   readonly originalStyle: string | null
   readonly layerNumber: number
   private horizontalBox: Interval
@@ -21,9 +21,9 @@ export class PlacedNode implements Node {
 
   constructor(p: Position, d: Dimensions) {
     this.id = p.node.getId()
+    this.text = p.node.getText()
     this.creationReason = (p.node as NodeForEditor).getCreationReason()
     const optionalOriginalNode = PlacedNode.optionalOriginalNode(p.node)
-    this.optionalText = optionalOriginalNode === null ? null : optionalOriginalNode.text
     this.originalStyle = optionalOriginalNode === null ? null : optionalOriginalNode.style
     this.layerNumber = p.layerNumber
     if (this.creationReason === CreationReason.ORIGINAL) {
@@ -37,6 +37,10 @@ export class PlacedNode implements Node {
 
   getId() {
     return this.id
+  }
+
+  getText() {
+    return this.text
   }
 
   private static optionalOriginalNode(rawNode: OptionalNode): ConcreteNode | null {

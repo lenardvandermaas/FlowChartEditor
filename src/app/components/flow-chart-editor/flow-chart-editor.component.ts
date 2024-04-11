@@ -3,8 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
 import { Drawing, FrankFlowchartComponent, Line, Rectangle, getEmptyDrawing } from '../frank-flowchart/frank-flowchart.component';
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
-import { GraphBase, Graph, GraphConnectionsDecorator } from '../../model/graph';
-import { calculateLayerNumbers, CreationReason, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
+import { GraphBase, Graph, GraphConnectionsDecorator, ConcreteNode, Edge, getEdgeKey, NodeCaptionChoice, getCaption } from '../../model/graph';
+import { calculateLayerNumbers, CreationReason, NodeForEditor, NodeSequenceEditorBuilder, OriginalNode } from '../../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
@@ -26,6 +26,24 @@ export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
+  showNodeTextInDrawing: boolean = true
+  choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
+
+  updateShowNodeTextInDrawing(): NodeCaptionChoice {
+    if (this.showNodeTextInDrawing) {
+      return NodeCaptionChoice.TEXT
+    }
+    return NodeCaptionChoice.ID
+  }
+
+  newChoiceShowNodeText() {
+    this.showNodeTextInDrawing = ! this.showNodeTextInDrawing
+    this.choiceShowNodeTextInDrawing = this.updateShowNodeTextInDrawing()
+    if (this.layoutModel !== null) {
+      this.updateDrawing()
+    }
+  }
+
   dimensions = getFactoryDimensions()
   drawing: Drawing = getEmptyDrawing()
   numCrossingLines: number = 0
@@ -69,7 +87,7 @@ export class FlowChartEditorComponent {
       .filter(n => n.creationReason === CreationReason.ORIGINAL)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
-        text: n.optionalText === null ? '' : n.optionalText}})
+        text: getCaption(n, this.choiceShowNodeTextInDrawing)}})
     const lines: Line[] = layout.getEdges()
       .map(edge => edge as PlacedEdge)
       .map(edge => { return {

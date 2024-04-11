@@ -1,32 +1,35 @@
-<table *ngIf="view.header.length > 0" cdkDropList (cdkDropListDropped)="drop($event)">
-  <thead>
-    <th></th>
-    <th *ngFor="let headerCell of view.header" [ngClass]="getClass(headerCell)">
-      {{ headerCell.nodeId === null ? "\<empty\>" : headerCell.nodeId}}
-    </th>
-  </thead>
-  <tr *ngFor="let row of view.body" cdkDrag>
-    <th [ngClass]="getClass(row.header)">
-      <div class="row-header-omitted" *ngIf="row.header.nodeId === null">
-        <select (change)="select($event, row.header.position)" cdkDragHandle>
-          <option></option>
-          <option *ngFor="let option of row.header.fillOptions">{{ option }}</option>
-        </select>
-      </div>
-      <div class="row-header-present" *ngIf="row.header.nodeId !== null">
-        <div cdkDragHandle>{{ row.header.nodeId }}</div>
-        <button (click)="omit(row.header.position)">X</button>
-      </div>
-    </th>
-    <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)">
-      <div
-        *ngIf=
-          "cell.fromAndToHaveNode && (cell.fromPosition !== cell.toPosition)"
-        [ngClass]="{
-          'edgeMark': true,
-          'hasEdge': cell.hasEdge ? true : undefined
-        }"></div>
-    </td>
-  </tr>
-</table>
-<div *ngIf="view.header.length == 0" class="placeholder">No Mermaid loaded yet</div>
+<div>
+  <div id="showTextContainer"><label>Show node text</label><input type="checkbox" [checked]="showText" (click)="onNewCaptionChoice()"/></div>
+  <table *ngIf="view.header.length > 0" cdkDropList (cdkDropListDropped)="drop($event)">
+    <thead>
+      <th></th>
+      <th *ngFor="let headerCell of view.header" [ngClass]="getClass(headerCell)">
+        {{ headerCell.nodeId === null ? "\<empty\>" : headerCell.nodeId}}
+      </th>
+    </thead>
+    <tr *ngFor="let row of view.body" cdkDrag>
+      <th [ngClass]="getClass(row.header)">
+        <div class="row-header-omitted" *ngIf="row.header.nodeId === null">
+          <select (change)="select($event, row.header.position)" cdkDragHandle>
+            <option></option>
+            <option *ngFor="let option of row.header.fillOptions">{{ option }}</option>
+          </select>
+        </div>
+        <div class="row-header-present" *ngIf="row.header.nodeId !== null">
+          <div cdkDragHandle>{{ row.header.nodeId }}</div>
+          <button (click)="omit(row.header.position)">X</button>
+        </div>
+      </th>
+      <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)">
+        <div
+          *ngIf=
+            "cell.fromAndToHaveNode && (cell.fromPosition !== cell.toPosition)"
+          [ngClass]="{
+            'edgeMark': true,
+            'hasEdge': cell.hasEdge ? true : undefined
+          }"></div>
+      </td>
+    </tr>
+  </table>
+  <div *ngIf="view.header.length == 0" class="placeholder">No Mermaid loaded yet</div>
+</div>

@@ -20,6 +20,10 @@ export class OriginalNode implements NodeForEditor {
     return this.original.getId()
   }
 
+  getText() {
+    return this.original.getText()
+  }
+
   getCreationReason(): CreationReason {
     return CreationReason.ORIGINAL
   }
@@ -31,6 +35,10 @@ export class IntermediateNode implements NodeForEditor {
   ) {}
 
   getId() {
+    return this.id
+  }
+
+  getText() {
     return this.id
   }
 

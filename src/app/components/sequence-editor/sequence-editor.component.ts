@@ -3,6 +3,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
 import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
+import { NodeCaptionChoice, getCaption } from '../../model/graph';
 
 @Component({
   selector: 'app-sequence-editor',
@@ -13,6 +14,23 @@ import { getRange } from '../../util/util';
 })
 export class SequenceEditorComponent {
   view: View = this.getEmptyView()
+  showText: boolean = false
+  captionChoice: NodeCaptionChoice = this.updateCaptionChoice()
+
+  updateCaptionChoice(): NodeCaptionChoice {
+    if (this.showText) {
+      return NodeCaptionChoice.TEXT
+    }
+    return NodeCaptionChoice.ID
+  }
+
+  onNewCaptionChoice() {
+    this.showText = (! this.showText)
+    this.captionChoice = this.updateCaptionChoice()
+    if (this.model !== null) {
+      this.view = this.getView(this.model!)
+    }
+  }
 
   private _model: NodeSequenceEditor | null = null
 
@@ -99,7 +117,7 @@ export class SequenceEditorComponent {
     const node = model.getSequence()[index]
     return {
       position: index,
-      nodeId: node === null ? null : node.getId()!,
+      nodeId: node === null ? null : getCaption(node, this.captionChoice),
       backgroundClass: model.getLayerOfPosition(index) % 2 === 1 ? BackgroundClass.ODD : BackgroundClass.EVEN,
       fillOptions: node !== null ? [] : model.getOrderedOmittedNodesInLayer(model.getLayerOfPosition(index)).map(omitted => omitted.getId())
     }

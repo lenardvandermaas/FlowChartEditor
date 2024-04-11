@@ -48,6 +48,8 @@ version.
           <td>
             <div id="zoomPerc">{{ zoomInput + "%" }}</div>
           </td>
+          <td id="labelShowNodeText">Show node text: </td>
+          <td><input type="checkbox" [checked]="showNodeTextInDrawing" (click)="newChoiceShowNodeText()"/></td>
         </tr>
       </table>
       <div id="drawing-area" class="boundary">
