@@ -1,10 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-
 import { getGraphFromMermaid } from './mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph'
 import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason } from '../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../model/nodeSequenceEditor';
-import { Dimensions, FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
+import { FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
+import { Dimensions } from '../components/dimensions-editor/dimensions-editor.component';
 
 describe('Integration', () => {
   it('Read Mermaid text and create NodeSequenceEditor', () => {
