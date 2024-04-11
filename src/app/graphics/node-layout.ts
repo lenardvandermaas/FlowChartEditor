@@ -56,15 +56,12 @@ export class NodeLayoutBuilder {
   }
 
   private createLayer(layerNumber: number): Layer {
-    console.log(`Creating layer ${layerNumber}`)
     const positions: Position[] = []
     const idToPosition: Map<string, Position> = new Map()
     let cursor = 0
     this.model.getSequenceInLayer(layerNumber).forEach(optionalNode => {
-      console.log(`Cursor is at ${cursor}`)
       if (optionalNode != null) {
         const position = this.createPosition(optionalNode, cursor, layerNumber)
-        console.log(`Position created for node ${position.node.getId()} at ${position.preds[0]}`)
         positions.push(position)
         idToPosition.set(position.node.getId(), position)
       }
