@@ -71,7 +71,7 @@ export class FlowChartEditorComponent {
       .map(n => n as PlacedNode)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
-        text: n.optionalText === null ? '' : n.optionalText}})
+        text: n.text}})
     const lines: Line[] = layout.getEdges()
       .map(edge => edge as PlacedEdge)
       .map(edge => { return {

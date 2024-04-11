@@ -137,7 +137,8 @@ export class GraphConnectionsDecorator implements Graph {
 
 export interface Node {
   getId(): string
-  // Intermediate nodes from the layering algorithm won't have text, so no getText method
+  // GUI components should be able to show the text of a node if available
+  getText(): string
 }
 
 export class ConcreteNode implements Node {
@@ -150,6 +151,10 @@ export class ConcreteNode implements Node {
 
   getId(): string {
     return this.id
+  }
+
+  getText() {
+    return this.text
   }
 }
 
