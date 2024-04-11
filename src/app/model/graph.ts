@@ -196,5 +196,86 @@ export function getCaption(n: Node, choice: NodeCaptionChoice): string {
   }
 }
 
+// If a node has been selected, all its incoming and outgoing
+// edges should also be highlighted.
+//
+// If an edge has been selected, the nodes it connects
+// should also be highlighted.
+export class NodeOrEdgeSelection {
+  private selectedNodeId: string | null = null
+  private selectedEdgeKey: string | null = null
+
+  selectNode(id: string, g: Graph) {
+    this.checkNodeId(id, g)
+    if (this.selectedNodeId === id) {
+      this.deselect()
+    } else {
+      this.deselect()
+      this.selectedNodeId = id
+    }
+  }
+
+  selectEdge(key: string, g: Graph) {
+    this.checkEdgeKey(key, g)
+    if (this.selectedEdgeKey === key) {
+      this.deselect()
+    } else {
+      this.deselect()
+      this.selectedEdgeKey = key
+    }
+  }
+
+  isNodeSelectedInGraph(nodeId: string, g: Graph): boolean {
+    this.checkNodeId(nodeId, g)
+    if (nodeId === this.selectedNodeId) {
+      return true
+    }
+    if (this.selectedEdgeKey !== null) {
+      const selectedEdge = g.getEdgeByKey(this.selectedEdgeKey)!
+      const connectedNodeIds = [selectedEdge.getFrom(), selectedEdge.getTo()]
+        .map(n => n.getId())
+      if (connectedNodeIds.indexOf(nodeId) >= 0) {
+        return true
+      }
+    }
+    return false
+  }
+
+  isEdgeSelectedInGraph(edgeKey: string, g: Graph): boolean {
+    this.checkEdgeKey(edgeKey, g)
+    if (this.selectedEdgeKey === edgeKey) {
+      return true
+    }
+    if (this.selectedNodeId !== null) {
+      const selectedNode = g.getNodeById(this.selectedNodeId)!
+      const connectedEdgeKeys: string[] =
+        [g.getOrderedEdgesStartingFrom(selectedNode), g.getOrderedEdgesLeadingTo(selectedNode)]
+        .flat()
+        .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
+      if (connectedEdgeKeys.indexOf(edgeKey) >= 0) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private deselect() {
+    this.selectedNodeId = null
+    this.selectedEdgeKey = null
+  }
+
+  private checkNodeId(id: string, g: Graph) {
+    if (g.getNodeById(id) === undefined) {
+      throw new Error(`No node with id ${id} exists in graph`)
+    }
+  }
+
+  private checkEdgeKey(key: string, g: Graph) {
+    if (g.getEdgeByKey(key) === undefined) {
+      throw new Error(`No edge with key ${key} exists in graph`)
+    }
+  }
+}
+
 export type OptionalNode = Node | null
 export type OptionalEdge = Edge | null

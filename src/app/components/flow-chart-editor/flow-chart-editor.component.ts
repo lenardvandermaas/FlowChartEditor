@@ -81,18 +81,22 @@ export class FlowChartEditorComponent {
   updateDrawing() {
     const layout = FlowChartEditorComponent.model2layout(this.layoutModel!, this.dimensions)
     this.numCrossingLines = layout.getNumCrossingLines()
+    // TODO: Properly fill selected property
     const rectangles: Rectangle[] = layout.getNodes()
       .map(n => n as PlacedNode)
       // No box around intermediate node
       .filter(n => n.creationReason === CreationReason.ORIGINAL)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
-        text: getCaption(n, this.choiceShowNodeTextInDrawing)}})
+        text: getCaption(n, this.choiceShowNodeTextInDrawing),
+        selected: true
+      }})
     const lines: Line[] = layout.getEdges()
       .map(edge => edge as PlacedEdge)
       .map(edge => { return {
         id: edge.key, x1: edge.line.startPoint.x, y1: edge.line.startPoint.y,
-        x2: edge.line.endPoint.x, y2: edge.line.endPoint.y
+        x2: edge.line.endPoint.x, y2: edge.line.endPoint.y,
+        selected: true
       }})
     this.drawing = {width: layout.width, height: layout.height, rectangles, lines}
   }
