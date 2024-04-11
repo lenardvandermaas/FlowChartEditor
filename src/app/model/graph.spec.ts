@@ -1,4 +1,4 @@
-import { Node, Edge, ConcreteGraphBase, Graph, GraphConnectionsDecorator } from './graph'
+import { Node, Edge, ConcreteGraphBase, Graph, GraphConnectionsDecorator, ConcreteNode, NodeCaptionChoice, getCaption } from './graph'
 
 describe('Graph test', () => {
   it('Calculation of outgoing and incoming edges', () => {
@@ -57,4 +57,10 @@ describe('Graph test', () => {
     }
     g.connect(from!, to!, '')
   }
+
+  it('getCaption', () => {
+    const n = new ConcreteNode(0, 'myId', 'My text', '')
+    expect(getCaption(n, NodeCaptionChoice.ID)).toBe('myId')
+    expect(getCaption(n, NodeCaptionChoice.TEXT)).toBe('My text')
+  })
 })

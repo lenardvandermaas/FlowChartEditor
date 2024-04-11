@@ -184,5 +184,17 @@ export class ConcreteEdge implements Edge {
   }
 }
 
+export enum NodeCaptionChoice {
+  ID = "id",
+  TEXT = "text"
+}
+
+export function getCaption(n: Node, choice: NodeCaptionChoice): string {
+  switch (choice) {
+    case NodeCaptionChoice.ID: return n.getId()
+    case NodeCaptionChoice.TEXT: return n.getText()
+  }
+}
+
 export type OptionalNode = Node | null
 export type OptionalEdge = Edge | null
