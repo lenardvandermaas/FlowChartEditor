@@ -294,29 +294,31 @@ describe('NodeSequenceEditor', () => {
 
 describe('NodeOrEdgeSelection', () => {
   it ('Select node and undo again', () => {
-    const g = getSelectionTestModel()
-    let instance = NodeOrEdgeSelection.create()
-    checkNothingSelected(instance, g)
-    instance.selectNode('N1', g)
-    checkNodeN1SelectedCorrectly(instance, g)
-    instance.selectNode('N2', g)
-    expect(instance.isNodeSelectedInDrawing('N2', g)).toBe(true)
-    instance.selectNode('N2', g)
-    checkNothingSelected(instance, g)
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectPosition(1, m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectPosition(2, m)
+    expect(instance.isFromPositionHighlightedInEditor(2, m)).toBe(true)
+    instance.selectPosition(2, m)
+    checkNothingSelected(instance, m)
   })
 
   it('Select edge and undo again', () => {
-    const g = getSelectionTestModel()
-    let instance = NodeOrEdgeSelection.create()
-    checkNothingSelected(instance, g)
-    instance.selectEdge('Start-N1', g)
-    checkEdgeStartN1SelectedCorrectly(instance, g)
-    instance.selectNode('N1', g)
-    checkNodeN1SelectedCorrectly(instance, g)
-    instance.selectEdge('Start-N1', g)
-    checkEdgeStartN1SelectedCorrectly(instance, g)
-    instance.selectEdge('Start-N1', g)
-    checkNothingSelected(instance, g)
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectCell(0, 1, m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectPosition(1, m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectCell(0, 1, m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectCell(0, 1, m)
+    checkNothingSelected(instance, m)
   })
 })
 
@@ -342,36 +344,36 @@ function getSelectionTestModel(): NodeSequenceEditor {
 
 function checkNothingSelected(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
   ['Start', 'N1', 'N2', 'End'].forEach(nodeId => {
-    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
   });
   ['Start-N1', 'Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
-    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
   })
 }
 
 function checkNodeN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
   ['Start', 'N2', 'End'].forEach(nodeId => {
-    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
   });
-  expect(instance.isNodeSelectedInDrawing('N1', m)).toBe(true);
+  expect(instance.isNodeHighlightedInDrawing('N1', m)).toBe(true);
   ['Start-N1', 'N1-End'].forEach(edgeKey => {
-    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(true)
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(true)
   });
   ['Start-N2', 'N2-End'].forEach(edgeKey => {
-    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
   });
 }
 
 function checkEdgeStartN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
   ['Start', 'N1'].forEach(nodeId => {
-    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(true)
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(true)
   });
   ['N2', 'End'].forEach(nodeId => {
-    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
   });
-  expect(instance.isEdgeSelectedInDrawing('Start-N1', m)).toBe(true);
+  expect(instance.isEdgeHighlightedInDrawing('Start-N1', m)).toBe(true);
   ['Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
-    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
   })
 }
 

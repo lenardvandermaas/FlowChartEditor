@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SequenceEditorComponent, View, BackgroundClass } from './sequence-editor.component';
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../../model/nodeSequenceEditor';
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 
-import { ConcreteGraphBase, GraphConnectionsDecorator } from '../../model/graph';
+import { ConcreteGraphBase, GraphConnectionsDecorator, NodeCaptionChoice } from '../../model/graph';
 
 describe('SequenceEditorComponent', () => {
   let component: SequenceEditorComponent;
@@ -42,7 +42,7 @@ describe('SequenceEditorComponent', () => {
     ])
     const model: NodeSequenceEditor = new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(b), m)
     model.omitNodeFrom(1)
-    const actual: View = component.getView(model)
+    const actual: View = SequenceEditorComponent.getView(model, NodeCaptionChoice.ID, new NodeOrEdgeSelection())
     const expected = getTheView()
     expect(actual).toEqual(expected)
   })

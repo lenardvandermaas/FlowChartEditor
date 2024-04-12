@@ -29,7 +29,15 @@ thead th {
 }
 
 .selected {
-  background-color: rgba(150, 150, 255, 0.3)
+  background-color: rgba(0, 0, 128, 0)
+}
+
+.selected.odd {
+  background-color: rgba(0, 0, 128, 0.2)
+}
+
+.selected.doubleOdd {
+  background-color: rgba(0, 0, 128, 0.3)
 }
 
 td {

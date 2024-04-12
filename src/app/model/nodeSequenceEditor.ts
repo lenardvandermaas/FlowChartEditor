@@ -364,129 +364,188 @@ function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer
 //
 // If an edge has been selected, the nodes it connects
 // should also be highlighted.
+
+interface NodeOrEdgeSelectionState {
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean
+  isSelectPositionUndoes(index: number): boolean
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean
+}
+
 export class NodeOrEdgeSelection {
-  private constructor (
-    private selectedNodeId: string | null,
-    private selectedEdgeKey: string | null
-  ) {}
+  private state: NodeOrEdgeSelectionState = new NodeOrEdgeSelectionStateDefault()
 
-  static create() {
-    return new NodeOrEdgeSelection(null, null)
-  }
-
-  static copy(other: NodeOrEdgeSelection) {
-    return new NodeOrEdgeSelection(other.selectedNodeId, other.selectedEdgeKey)
-  }
-
-  selectNode(id: string, m: NodeSequenceEditor) {
-    this.checkNodeId(id, m)
-    if (this.selectedNodeId === id) {
-      this.deselect()
+  selectPosition(index: number, model: NodeSequenceEditor) {
+    if (this.state.isSelectPositionUndoes(index)) {
+      this.state = new NodeOrEdgeSelectionStateDefault()
     } else {
-      this.deselect()
-      this.selectedNodeId = id
+      this.state = new NodeOrEdgeSelectionStatePosition(index, model)
     }
   }
 
-  selectEdge(key: string, m: NodeSequenceEditor) {
-    this.checkEdgeKey(key, m)
-    if (this.selectedEdgeKey === key) {
-      this.deselect()
+  selectCell(indexFrom: number, indexTo: number, model: NodeSequenceEditor) {
+    if (this.state.isSelectCellUndoes(indexFrom, indexTo)) {
+      this.state = new NodeOrEdgeSelectionStateDefault()
     } else {
-      this.deselect()
-      this.selectedEdgeKey = key
+      this.state = new NodeOrEdgeSelectionStateCell(indexFrom, indexTo, model)
     }
   }
 
-  isNodeSelectedInDrawing(nodeId: string, m: NodeSequenceEditor): boolean {
-    this.checkNodeId(nodeId, m)
-    if (nodeId === this.selectedNodeId) {
-      return true
-    }
-    if (this.selectedEdgeKey !== null) {
-      const selectedEdge = m.getEdgeByKey(this.selectedEdgeKey)!
-      const connectedNodeIds = [selectedEdge.getFrom(), selectedEdge.getTo()]
-        .map(n => n.getId())
-      if (connectedNodeIds.indexOf(nodeId) >= 0) {
-        return true
-      }
-    }
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return this.state.isFromPositionHighlightedInEditor(index, model)
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return this.state.isToPositionHighlightedInEditor(index, model)
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return this.state.isCellHighlightedInEditor(indexFrom, indexTo, model)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return this.state.isNodeHighlightedInDrawing(id, model)
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    return this.state.isEdgeHighlightedInDrawing(key, model)
+  }
+}
+
+class NodeOrEdgeSelectionStateDefault implements NodeOrEdgeSelectionState {
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return false
   }
 
-  isEdgeSelectedInDrawing(edgeKey: string, m: NodeSequenceEditor): boolean {
-    this.checkEdgeKey(edgeKey, m)
-    if (this.selectedEdgeKey === edgeKey) {
-      return true
-    }
-    if (this.selectedNodeId !== null) {
-      const connectedEdgeKeys: string[] =
-        [m.getOrderedEdgesStartingFrom(this.selectedNodeId), m.getOrderedEdgesLeadingTo(this.selectedNodeId)]
-        .flat()
-        .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
-      if (connectedEdgeKeys.indexOf(edgeKey) >= 0) {
-        return true
-      }
-    }
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return false
   }
 
-  static isFromPositionSelectedInEditor(fromPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
-    return NodeOrEdgeSelection.isPositionSelectedInEditor(fromPosition, e => e.getFrom(), m, context)
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return false
   }
 
-  private static isPositionSelectedInEditor(position: number, edgeDirection: (e: Edge) => Node, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
-    const nodeQuery: OptionalNode = m.getSequence()[position]
-    if (nodeQuery === null) {
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isSelectPositionUndoes(index: number): boolean {
+    return false
+  }
+
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return false
+  }
+}
+
+class NodeOrEdgeSelectionStatePosition implements NodeOrEdgeSelectionState {
+  private optionalSelectedNode: OptionalNode
+
+  constructor(
+    private position: number,
+    model: NodeSequenceEditor
+  ) {
+    this.optionalSelectedNode = model.getSequence()[this.position]
+  }
+
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.position
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.position
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return (indexFrom === this.position) || (indexTo === this.position)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return (this.optionalSelectedNode !== null) && (id === this.optionalSelectedNode.getId())
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    if (this.optionalSelectedNode === null) {
       return false
     }
-    if (context.selectedNodeId === nodeQuery.getId()) {
+    const id = this.optionalSelectedNode.getId()
+    const edgeKeysOnSelectedNode: string[] =
+      [model.getOrderedEdgesStartingFrom(id), model.getOrderedEdgesLeadingTo(id)]
+      .flat()
+      .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
+    if (edgeKeysOnSelectedNode.indexOf(key) >= 0) {
       return true
-    }
-    if (context.selectedEdgeKey !== null) {
-      const selectedEdge: Edge = m.getEdgeByKey(context.selectedEdgeKey)!
-      const refNode: Node = edgeDirection(selectedEdge)
-      if (nodeQuery.getId() === refNode.getId()) {
-        return true
-      }
     }
     return false
   }
 
-  static isToPositionSelectedInEditor(toPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
-    return NodeOrEdgeSelection.isPositionSelectedInEditor(toPosition, e => e.getTo(), m, context)
+  isSelectPositionUndoes(index: number): boolean {
+    return index === this.position
   }
 
-  static isCellSelectedInEditor(fromPosition: number, toPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
-    if (context.selectedNodeId !== null) {
-      return NodeOrEdgeSelection.isFromPositionSelectedInEditor(fromPosition, m, context) || NodeOrEdgeSelection.isToPositionSelectedInEditor(toPosition, m, context)
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return false
+  }
+}
+
+class NodeOrEdgeSelectionStateCell implements NodeOrEdgeSelectionState {
+  private optionalFromNode: OptionalNode
+  private optionalToNode: OptionalNode
+  private optionalSelectedEdge: OptionalEdge
+
+  constructor(
+    private indexFrom: number,
+    private indexTo: number,
+    model: NodeSequenceEditor
+  ) {
+    this.optionalFromNode = model.getSequence()[indexFrom]
+    this.optionalToNode = model.getSequence()[indexTo]
+    if ( (this.optionalFromNode !== null) && (this.optionalToNode !== null)) {
+      const key: string = getEdgeKey(this.optionalFromNode, this.optionalToNode)
+      const optionalSelectedEdge: Edge | undefined = model.getEdgeByKey(key)
+      this.optionalSelectedEdge = optionalSelectedEdge === undefined ? null : optionalSelectedEdge
     } else {
-      const optionalFromNode: OptionalNode = m.getSequence()[fromPosition]
-      const optionalToNode: OptionalNode = m.getSequence()[toPosition]
-      if ( (optionalFromNode !== null) && (optionalToNode !== null) ) {
-        const keyQuery = getEdgeKey(optionalFromNode, optionalToNode)
-        if (keyQuery === context.selectedEdgeKey) {
-          return true
-        }
-      }
-      return false
+      this.optionalSelectedEdge = null
     }
   }
 
-  private deselect() {
-    this.selectedNodeId = null
-    this.selectedEdgeKey = null
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.indexFrom
   }
 
-  private checkNodeId(id: string, m: NodeSequenceEditor) {
-    if (m.getNodeById(id) === undefined) {
-      throw new Error(`No node with id ${id} exists in graph`)
-    }
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.indexTo
   }
 
-  private checkEdgeKey(key: string, m: NodeSequenceEditor) {
-    if (m.getEdgeByKey(key) === undefined) {
-      throw new Error(`No edge with key ${key} exists in graph`)
-    }
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return (indexFrom === this.indexFrom) && (indexTo === this.indexTo)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return this.isIdMatchesOptionalNode(id, this.optionalFromNode) || this.isIdMatchesOptionalNode(id, this.optionalToNode)
+  }
+
+  private isIdMatchesOptionalNode(id: string, n: OptionalNode): boolean {
+    return (n !== null) && (id === n.getId())
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    return (this.optionalSelectedEdge !== null)
+      && (key === getEdgeKey(this.optionalSelectedEdge.getFrom(), this.optionalSelectedEdge.getTo()))
+  }
+
+  isSelectPositionUndoes(index: number): boolean {
+    return false
+  }
+
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return (indexFrom === this.indexFrom) && (indexTo === this.indexTo)
   }
 }
