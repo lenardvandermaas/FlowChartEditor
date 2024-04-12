@@ -1,6 +1,7 @@
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse, NodeOrEdgeSelection } from "./nodeSequenceEditor";
 import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator, Graph  } from "./graph"
 import { NodeSequenceEditorBuilder } from "./horizontalGrouping";
+import { getRange } from "../util/util";
 
 function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
@@ -349,6 +350,15 @@ function checkNothingSelected(instance: NodeOrEdgeSelection, m: NodeSequenceEdit
   ['Start-N1', 'Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
     expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
   })
+  getRange(0, 4).forEach(index => {
+    expect(instance.isFromPositionHighlightedInEditor(index, m)).toBe(false)
+    expect(instance.isToPositionHighlightedInEditor(index, m)).toBe(false)
+  })
+  getRange(0, 4).forEach(indexFrom => {
+    getRange(0, 4).forEach(indexTo => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(false)
+    })
+  })
 }
 
 function checkNodeN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
@@ -362,6 +372,25 @@ function checkNodeN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequ
   ['Start-N2', 'N2-End'].forEach(edgeKey => {
     expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
   });
+  [false, true, false, false].forEach((expectedToHighlighted, indexTo) => {
+    expect(instance.isToPositionHighlightedInEditor(indexTo, m)).toBe(expectedToHighlighted)
+  });
+  [false,
+  true,
+  false,
+  false].forEach((expectedFromHighlighted, indexFrom) => {
+    expect(instance.isFromPositionHighlightedInEditor(indexFrom, m)).toBe(expectedFromHighlighted)
+  });
+  [
+    [false, true, false, false],
+    [true, true, true, true],
+    [false, true, false, false],
+    [false, true, false, false]
+  ].forEach( (row, indexFrom) => {
+    row.forEach((expectedCellHighlighted, indexTo) => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(expectedCellHighlighted)
+    })
+  })
 }
 
 function checkEdgeStartN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
@@ -374,6 +403,25 @@ function checkEdgeStartN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: Nod
   expect(instance.isEdgeHighlightedInDrawing('Start-N1', m)).toBe(true);
   ['Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
     expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
+  });
+  [false, true, false, false].forEach((expectedToHighlighted, indexTo) => {
+    expect(instance.isToPositionHighlightedInEditor(indexTo, m)).toBe(expectedToHighlighted)
+  });
+  [true,
+  false,
+  false,
+  false].forEach((expectedFromHighlighted, indexFrom) => {
+    expect(instance.isFromPositionHighlightedInEditor(indexFrom, m)).toBe(expectedFromHighlighted)
+  });
+  [
+    [false, true, false, false],
+    [false, false, false, false],
+    [false, false, false, false],
+    [false, false, false, false]
+  ].forEach((row, indexFrom) => {
+    row.forEach((expectedCellHighlighted, indexTo) => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(expectedCellHighlighted)
+    })
   })
 }
 
