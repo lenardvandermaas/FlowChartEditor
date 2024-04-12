@@ -42,7 +42,8 @@ describe('SequenceEditorComponent', () => {
     ])
     const model: NodeSequenceEditor = new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(b), m)
     model.omitNodeFrom(1)
-    const actual: View = SequenceEditorComponent.getView(model, NodeCaptionChoice.ID, new NodeOrEdgeSelection())
+    component.model = model
+    const actual: View = component.getView()
     const expected = getTheView()
     expect(actual).toEqual(expected)
   })
