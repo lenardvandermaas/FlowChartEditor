@@ -31,14 +31,12 @@ describe('Graph test', () => {
   })
 
   function checkNodePointsTo(fromId: string, toIds: string[], g: Graph) {
-    const from: Node = g.getNodeById(fromId)!
-    const successors: readonly Node[] = g.getSuccessors(from)
+    const successors: readonly Node[] = g.getSuccessors(fromId)
     expect(successors.map(n => n.getId())).toEqual(toIds)
   }
 
   function checkNodeReachedFrom(toId: string, fromIds: string[], g: Graph) {
-    let to: Node = g.getNodeById(toId)!
-    let predecessors: readonly Node[] = g.getPredecessors(to)
+    let predecessors: readonly Node[] = g.getPredecessors(toId)
     expect(predecessors.map(n => n.getId())).toEqual(fromIds)
   }
 

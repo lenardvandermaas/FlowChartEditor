@@ -168,11 +168,11 @@ function getIntermediateLayers(layerFrom: number, layerTo: number): number[] {
 
 export function calculateLayerNumbers(graph: Graph): Map<string, number> {
   let layerMap: Map<string, number> = new Map()
-  let queue: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n).length === 0)
+  let queue: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n.getId()).length === 0)
   while (queue.length > 0) {
     // No node on the queue has a layer number
     const current: Node = queue.shift()!
-    const incomingEdges = graph.getOrderedEdgesLeadingTo(current)
+    const incomingEdges = graph.getOrderedEdgesLeadingTo(current.getId())
     if (incomingEdges.length === 0) {
       layerMap.set(current.getId(), 0)
     } else {
@@ -184,7 +184,7 @@ export function calculateLayerNumbers(graph: Graph): Map<string, number> {
         .filter(predecessor => layerMap.has(predecessor.getId()))
         .map(predecessor => layerMap.get(predecessor.getId())!)
       let layerNumberCandidate = Math.max( ... precedingLayers) + 1
-      const layersOfPlacedSuccessors: number[] = graph.getOrderedEdgesStartingFrom(current)
+      const layersOfPlacedSuccessors: number[] = graph.getOrderedEdgesStartingFrom(current.getId())
         .map(edge => edge.getTo())
         .filter(successor => layerMap.has(successor.getId()))
         .map(successor => layerMap.get(successor.getId())!)
@@ -196,7 +196,7 @@ export function calculateLayerNumbers(graph: Graph): Map<string, number> {
     }
     // current has a layer number but it is off the queue.
     // Still no node on the queue has a layer number
-    graph.getOrderedEdgesStartingFrom(current)
+    graph.getOrderedEdgesStartingFrom(current.getId())
       .map(edge => edge.getTo())
       .filter(node => ! layerMap.has(node.getId()))
       .forEach(node => queue.push(node));

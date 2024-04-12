@@ -8,10 +8,10 @@ export interface GraphBase {
 }
 
 export interface Graph extends GraphBase {
-  getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[]
-  getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[]
-  getSuccessors(node: Node): readonly Node[]
-  getPredecessors(node: Node): readonly Node[]
+  getOrderedEdgesStartingFrom(startNodeId: string): readonly Edge[]
+  getOrderedEdgesLeadingTo(endNodeId: string): readonly Edge[]
+  getSuccessors(nodeId: string): readonly Node[]
+  getPredecessors(nodeId: string): readonly Node[]
 }
 
 export class ConcreteGraphBase implements GraphBase {
@@ -118,20 +118,30 @@ export class GraphConnectionsDecorator implements Graph {
     return this.delegate.getEdgeByKey(key)
   }
 
-  getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[] {
-    return this.startingFrom!.get(startNode.getId())!
+  getOrderedEdgesStartingFrom(startNodeId: string): readonly Edge[] {
+    this.checkNodeIdInGraph(startNodeId)
+    return this.startingFrom!.get(startNodeId)!
   }
 
-  getOrderedEdgesLeadingTo(endNode: Node): readonly Edge[] {
-    return this.leadingTo!.get(endNode.getId())!
+  getOrderedEdgesLeadingTo(endNodeId: string): readonly Edge[] {
+    this.checkNodeIdInGraph(endNodeId)
+    return this.leadingTo!.get(endNodeId)!
   }
 
-  getSuccessors(node: Node): readonly Node[] {
-    return this.getOrderedEdgesStartingFrom(node).map(edge => edge.getTo())
+  getSuccessors(nodeId: string): readonly Node[] {
+    this.checkNodeIdInGraph(nodeId)
+    return this.getOrderedEdgesStartingFrom(nodeId).map(edge => edge.getTo())
   }
 
-  getPredecessors(node: Node): readonly Node[] {
-    return this.getOrderedEdgesLeadingTo(node).map(edge => edge.getFrom())
+  getPredecessors(nodeId: string): readonly Node[] {
+    this.checkNodeIdInGraph(nodeId)
+    return this.getOrderedEdgesLeadingTo(nodeId).map(edge => edge.getFrom())
+  }
+
+  checkNodeIdInGraph(nodeId: string) {
+    if (this.delegate.getNodeById(nodeId) === undefined) {
+      throw new Error(`Node id ${nodeId} is not in this Graph`)
+    }
   }
 }
 
@@ -257,9 +267,8 @@ export class NodeOrEdgeSelection {
       return true
     }
     if (this.selectedNodeId !== null) {
-      const selectedNode = g.getNodeById(this.selectedNodeId)!
       const connectedEdgeKeys: string[] =
-        [g.getOrderedEdgesStartingFrom(selectedNode), g.getOrderedEdgesLeadingTo(selectedNode)]
+        [g.getOrderedEdgesStartingFrom(this.selectedNodeId), g.getOrderedEdgesLeadingTo(this.selectedNodeId)]
         .flat()
         .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
       if (connectedEdgeKeys.indexOf(edgeKey) >= 0) {

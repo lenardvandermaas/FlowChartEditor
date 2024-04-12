@@ -15,13 +15,7 @@ export enum UpdateResponse {
 
 type OptionalString = string | null
 
-export interface NodeSequenceEditor {
-  getNodeById(id: string): Node | undefined
-  getEdges(): readonly Edge[]
-  getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
-  getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
-  getSuccessors(nodeId: string): readonly Node[]
-  getPredecessors(nodeId: string): readonly Node[]
+export interface NodeSequenceEditor extends Graph {
   getNumLayers(): number
   getLayerOfPosition(position: number): number
   getLayerOfNode(node: Node): number
@@ -91,6 +85,10 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     })
   }
 
+  getNodes(): readonly Node[] {
+    return this.graph.getNodes()
+  }
+
   getNodeById(id: string): Node | undefined {
     return this.graph.getNodeById(id)
   }
@@ -99,28 +97,32 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     return this.graph.getEdges()
   }
 
+  getEdgeByKey(key: string): Edge | undefined {
+    return this.graph.getEdgeByKey(key)
+  }
+
   getNumLayers(): number {
     return this.layerStartPositions.length
   }
 
   getOrderedEdgesStartingFrom(startId: string): readonly Edge[] {
     this.checkNodeId(startId)
-    return this.graph.getOrderedEdgesStartingFrom(this.getNodeById(startId)!)
+    return this.graph.getOrderedEdgesStartingFrom(startId)
   }
 
   getOrderedEdgesLeadingTo(endId: string): readonly Edge[] {
     this.checkNodeId(endId)
-    return this.graph.getOrderedEdgesLeadingTo(this.getNodeById(endId)!)
+    return this.graph.getOrderedEdgesLeadingTo(endId)
   }
 
   getSuccessors(nodeId: string): readonly Node[] {
     this.checkNodeId(nodeId)
-    return this.graph.getSuccessors(this.getNodeById(nodeId)!)
+    return this.graph.getSuccessors(nodeId)
   }
 
   getPredecessors(nodeId: string): readonly Node[] {
     this.checkNodeId(nodeId)
-    return this.graph.getPredecessors(this.getNodeById(nodeId)!)
+    return this.graph.getPredecessors(nodeId)
   }
 
   getLayerOfPosition(position: number): number {
