@@ -20,10 +20,8 @@
           <button (click)="omit(row.header.position)">X</button>
         </div>
       </th>
-      <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)">
+      <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)" (click)="selectCell(cell.fromPosition, cell.toPosition)">
         <div
-          *ngIf=
-            "cell.fromAndToHaveNode && (cell.fromPosition !== cell.toPosition)"
           [ngClass]="getCellClass(cell)"
           (click)="selectCell(cell.fromPosition, cell.toPosition)">
         </div>

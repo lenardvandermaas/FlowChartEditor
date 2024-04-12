@@ -5,7 +5,7 @@ import { Drawing, FrankFlowchartComponent, Line, Rectangle, getEmptyDrawing } fr
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator, ConcreteNode, Edge, getEdgeKey, NodeCaptionChoice, getCaption } from '../../model/graph';
 import { calculateLayerNumbers, CreationReason, NodeForEditor, NodeSequenceEditorBuilder, OriginalNode } from '../../model/horizontalGrouping';
-import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
+import { NodeOrEdgeSelection, NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
 import { Dimensions, DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
@@ -26,6 +26,7 @@ export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
+  selectionInModel: NodeOrEdgeSelection = new NodeOrEdgeSelection
   showNodeTextInDrawing: boolean = true
   choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
 
@@ -89,14 +90,14 @@ export class FlowChartEditorComponent {
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
         text: getCaption(n, this.choiceShowNodeTextInDrawing),
-        selected: true
+        selected: this.selectionInModel.isNodeHighlightedInDrawing(n.getId(), this.layoutModel!)
       }})
     const lines: Line[] = layout.getEdges()
       .map(edge => edge as PlacedEdge)
       .map(edge => { return {
         id: edge.key, x1: edge.line.startPoint.x, y1: edge.line.startPoint.y,
         x2: edge.line.endPoint.x, y2: edge.line.endPoint.y,
-        selected: true
+        selected: this.selectionInModel.isEdgeHighlightedInDrawing(getEdgeKey(edge.getFrom(), edge.getTo()), this.layoutModel!)
       }})
     this.drawing = {width: layout.width, height: layout.height, rectangles, lines}
   }

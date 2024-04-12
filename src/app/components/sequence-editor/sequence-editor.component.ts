@@ -123,7 +123,10 @@ export class SequenceEditorComponent {
   }
 
   getCellClass(cell: Cell) {
-    const result = ['edgeMark']
+    const result = []
+    if (cell.fromPosition !== cell.toPosition) {
+      result.push('edgeMark')
+    }
     if (cell.hasEdge) {
       result.push('hasEdge')
     }

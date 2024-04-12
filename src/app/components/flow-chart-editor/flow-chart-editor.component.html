@@ -33,7 +33,7 @@ version.
     <td>
       <h2>Sequence editor</h2>
       <div class="boundary">
-        <app-sequence-editor [model]="layoutModel" (onChanged)="onSequenceEditorChanged()"></app-sequence-editor>
+        <app-sequence-editor [model]="layoutModel" [selection]="selectionInModel" (onChanged)="onSequenceEditorChanged()"></app-sequence-editor>
       </div>
     </td>
     <td id="drawing">

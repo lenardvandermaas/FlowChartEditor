@@ -18,6 +18,7 @@ table {
 thead th {
   writing-mode: vertical-lr;
   vertical-align: bottom;
+  cursor: default
 }
 
 .odd {
@@ -38,6 +39,10 @@ thead th {
 
 .selected.doubleOdd {
   background-color: rgba(0, 0, 128, 0.3)
+}
+
+.even.selected {
+  background-color: rgb(196, 196, 255)
 }
 
 td {
