@@ -4,6 +4,7 @@ import { SequenceEditorComponent, View, BackgroundClass } from './sequence-edito
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 
 import { ConcreteGraphBase, GraphConnectionsDecorator, NodeCaptionChoice } from '../../model/graph';
+import { Subject } from 'rxjs';
 
 describe('SequenceEditorComponent', () => {
   let component: SequenceEditorComponent;
@@ -11,12 +12,13 @@ describe('SequenceEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SequenceEditorComponent]
+      imports: [SequenceEditorComponent],
     })
     .compileComponents();
     
     fixture = TestBed.createComponent(SequenceEditorComponent);
     component = fixture.componentInstance;
+    component.itemClickedObservable = new Subject()
     fixture.detectChanges();
   });
 

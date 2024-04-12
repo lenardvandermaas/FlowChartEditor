@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
 import { NodeSequenceEditor, NodeSequenceEditorCell, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
 import { NodeCaptionChoice, OptionalNode, getCaption, getEdgeKey } from '../../model/graph';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sequence-editor',
@@ -12,7 +13,7 @@ import { NodeCaptionChoice, OptionalNode, getCaption, getEdgeKey } from '../../m
   templateUrl: './sequence-editor.component.html',
   styleUrl: './sequence-editor.component.scss'
 })
-export class SequenceEditorComponent {
+export class SequenceEditorComponent implements OnInit, OnDestroy {
   view: View = this.getEmptyView()
   showText: boolean = false
   captionChoice: NodeCaptionChoice = this.updateCaptionChoice()
@@ -58,6 +59,25 @@ export class SequenceEditorComponent {
   @Input()
   selection: NodeOrEdgeSelection = new NodeOrEdgeSelection()
 
+  @Input() itemClickedObservable: Observable<string> | null = null
+  private subscription: Subscription | null = null
+
+  ngOnInit(): void {
+    this.subscription = this.itemClickedObservable!.subscribe(value => SequenceEditorComponent.itemClicked(value, this))
+  }
+  
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe()
+  }
+
+  private static itemClicked(itemClicked: string, context: SequenceEditorComponent) {
+    if (itemClicked.indexOf('-') >= 0) {
+      context.selectEdgeKey(itemClicked)
+    } else {
+      context.selectNodeId(itemClicked)
+    }
+  }
+
   @Output()
   onChanged: EventEmitter<any> = new EventEmitter<any>()
 
@@ -89,6 +109,22 @@ export class SequenceEditorComponent {
     }
   }
 
+  selectNodeId(nodeId: string) {
+    if (this.model === null) {
+      return
+    }
+    const index: number = this.positionOfNode(nodeId)
+    if (index >= 0) {
+      this.selectNode(index)
+    }
+  }
+
+  private positionOfNode(nodeId: string): number {
+    return this.model!.getSequence()
+      .map(n => n === null ? null : n.getId())
+      .indexOf(nodeId)
+  }
+
   selectNode(index: number) {
     if (this.model === null) {
       return
@@ -96,6 +132,17 @@ export class SequenceEditorComponent {
     this.selection.selectPosition(index, this.model)
     this.view = this.getView()
     this.onChanged.emit(true)
+  }
+
+  selectEdgeKey(key: string) {
+    const components = key.split('-')
+    const fromId = components[0]
+    const toId = components[1]
+    const indexFrom = this.positionOfNode(fromId)
+    const indexTo = this.positionOfNode(toId)
+    if ( (indexFrom >= 0) && (indexTo >= 0)) {
+      this.selectCell(indexFrom, indexTo)
+    }
   }
 
   selectCell(indexFrom: number, indexTo: number) {

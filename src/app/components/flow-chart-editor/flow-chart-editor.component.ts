@@ -9,6 +9,7 @@ import { NodeOrEdgeSelection, NodeSequenceEditor } from '../../model/nodeSequenc
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
 import { Dimensions, DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
+import { Subject } from 'rxjs';
 
 export interface NodeSequenceEditorOrError {
   model: NodeSequenceEditor | null
@@ -48,6 +49,13 @@ export class FlowChartEditorComponent {
   dimensions = getFactoryDimensions()
   drawing: Drawing = getEmptyDrawing()
   numCrossingLines: number = 0
+
+  // In the drawing
+  itemClickedSubject: Subject<string> = new Subject<string>
+
+  onItemClicked(itemClicked: string) {
+    this.itemClickedSubject?.next(itemClicked)
+  }
 
   loadMermaid() {
     const modelOrError: NodeSequenceEditorOrError = FlowChartEditorComponent.mermaid2model(this.mermaidText)

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-frank-flowchart',
@@ -11,9 +11,14 @@ import { Component, Input } from '@angular/core';
 export class FrankFlowchartComponent {
   @Input() zoom: number = 100
   @Input() drawing: Drawing = getEmptyDrawing()
+  @Output() onShapeClicked: EventEmitter<string> = new EventEmitter()
 
   calcZoom(coord: number): number {
     return coord * this.zoom / 100
+  }
+
+  handleShapeClicked(id: string) {
+    this.onShapeClicked.emit(id)
   }
 
   getRectangleClass(rectangle: Rectangle): string[] {

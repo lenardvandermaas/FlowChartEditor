@@ -16,3 +16,12 @@
 .line.selected {
   stroke: blue;
 }
+
+.rectangle:hover {
+  stroke-width: 10;
+}
+
+.line:hover {
+  stroke-width: 10;
+}
+
