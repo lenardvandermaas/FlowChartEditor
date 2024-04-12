@@ -68,7 +68,7 @@ function newEdge(fromId: string, toId: string, g: ConcreteGraphBase) {
 describe('NodeOrEdgeSelection', () => {
   it ('Select node and undo again', () => {
     const g = getSelectionTestGraph()
-    let instance = new NodeOrEdgeSelection()
+    let instance = NodeOrEdgeSelection.create()
     checkNothingSelected(instance, g)
     instance.selectNode('N1', g)
     checkNodeN1SelectedCorrectly(instance, g)
@@ -80,7 +80,7 @@ describe('NodeOrEdgeSelection', () => {
 
   it('Select edge and undo again', () => {
     const g = getSelectionTestGraph()
-    let instance = new NodeOrEdgeSelection()
+    let instance = NodeOrEdgeSelection.create()
     checkNothingSelected(instance, g)
     instance.selectEdge('Start-N1', g)
     checkEdgeStartN1SelectedCorrectly(instance, g)

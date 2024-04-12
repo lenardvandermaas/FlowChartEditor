@@ -202,8 +202,18 @@ export function getCaption(n: Node, choice: NodeCaptionChoice): string {
 // If an edge has been selected, the nodes it connects
 // should also be highlighted.
 export class NodeOrEdgeSelection {
-  private selectedNodeId: string | null = null
-  private selectedEdgeKey: string | null = null
+  private constructor (
+    private selectedNodeId: string | null,
+    private selectedEdgeKey: string | null
+  ) {}
+
+  static create() {
+    return new NodeOrEdgeSelection(null, null)
+  }
+
+  static copy(other: NodeOrEdgeSelection) {
+    return new NodeOrEdgeSelection(other.selectedNodeId, other.selectedEdgeKey)
+  }
 
   selectNode(id: string, g: Graph) {
     this.checkNodeId(id, g)
