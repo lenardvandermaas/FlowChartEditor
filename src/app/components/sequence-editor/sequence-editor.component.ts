@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
-import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
+import { NodeSequenceEditor, NodeSequenceEditorCell, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
-import { NodeCaptionChoice, getCaption } from '../../model/graph';
+import { NodeCaptionChoice, OptionalNode, getCaption, getEdgeKey } from '../../model/graph';
 
 @Component({
   selector: 'app-sequence-editor',
@@ -55,6 +55,9 @@ export class SequenceEditorComponent {
     }
   }
 
+  @Input()
+  selection: NodeOrEdgeSelection = NodeOrEdgeSelection.create()
+
   @Output()
   onChanged: EventEmitter<any> = new EventEmitter<any>()
 
@@ -76,7 +79,7 @@ export class SequenceEditorComponent {
     }
   }
 
-  select($event: Event, position: number) {
+  reintroducePulldownSelect($event: Event, position: number) {
     if (this.model !== null) {
       const target = $event.target as HTMLSelectElement
       const option: string = target.value
@@ -86,24 +89,65 @@ export class SequenceEditorComponent {
     }
   }
 
-  getClass(item: Position | Cell) {
-    if (item.backgroundClass === BackgroundClass.EVEN) {
-      return {'even': true}
-    } else if (item.backgroundClass === BackgroundClass.ODD) {
-      return {'odd': true}
-    } else {
-      return {'doubleOdd': true}
+  selectNode(index: number) {
+    console.log(`Node selected ${index}`)
+    if (this.model === null) {
+      return
     }
+    const optionalNode: OptionalNode = this.model.getSequence()[index]
+    if (optionalNode !== null) {
+      this.selection.selectNode(optionalNode.getId(), this.model)
+    }
+    this.view = this.getView(this.model)
+    this.onChanged.emit(true)
+  }
+
+  selectCell(indexFrom: number, indexTo: number) {
+    console.log(`Cell selected: from ${indexFrom}, to: ${indexTo}`)
+    if (this.model === null) {
+      return
+    }
+    const optionalFrom = this.model.getSequence()[indexFrom]
+    const optionalTo = this.model.getSequence()[indexTo]
+    if ( (optionalFrom !== null) && (optionalTo !== null) ) {
+      const keyToSelect = getEdgeKey(optionalFrom, optionalTo)
+      this.selection.selectEdge(keyToSelect, this.model)
+    }
+    this.view = this.getView(this.model)
+    this.onChanged.emit(true)
+  }
+
+  getClass(item: Position | Cell): string[] {
+    const result = []
+    if (item.selected === true) {
+      result.push('selected')
+    }
+    if (item.backgroundClass === BackgroundClass.EVEN) {
+      result.push('even')
+    } else if (item.backgroundClass === BackgroundClass.ODD) {
+      result.push('odd')
+    } else {
+      result.push('doubleOdd')
+    }
+    return result
+  }
+
+  getCellClass(cell: Cell) {
+    const result = ['edgeMark']
+    if (cell.hasEdge) {
+      result.push('hasEdge')
+    }
+    return result
   }
 
   getView(model: NodeSequenceEditor): View {
     return {
       header: getRange(0, model.getSequence().length)
-        .map(index => this.getPosition(index, model)),
+        .map(index => this.getPosition(index, model, (index, model) => NodeOrEdgeSelection.isToPositionSelectedInEditor(index, model, this.selection))),
       body: getRange(0, model.getSequence().length)
         .map(indexFrom => {
           return {
-            header: this.getPosition(indexFrom, model),
+            header: this.getPosition(indexFrom, model, (index, model) => NodeOrEdgeSelection.isFromPositionSelectedInEditor(index, model, this.selection)),
             cells: getRange(0, model.getSequence().length)
               .map(indexTo => {
                 return this.getCell(indexFrom, indexTo, model)
@@ -113,13 +157,14 @@ export class SequenceEditorComponent {
     }
   }
 
-  private getPosition(index: number, model: NodeSequenceEditor): Position {
+  private getPosition(index: number, model: NodeSequenceEditor, selectionGetter: SelectionGetter): Position {
     const node = model.getSequence()[index]
     return {
       position: index,
       nodeId: node === null ? null : getCaption(node, this.captionChoice),
       backgroundClass: model.getLayerOfPosition(index) % 2 === 1 ? BackgroundClass.ODD : BackgroundClass.EVEN,
-      fillOptions: node !== null ? [] : model.getOrderedOmittedNodesInLayer(model.getLayerOfPosition(index)).map(omitted => omitted.getId())
+      fillOptions: node !== null ? [] : model.getOrderedOmittedNodesInLayer(model.getLayerOfPosition(index)).map(omitted => omitted.getId()),
+      selected: selectionGetter(index, model)
     }
   }
 
@@ -143,7 +188,8 @@ export class SequenceEditorComponent {
       toPosition: indexTo,
       backgroundClass: bgClass,
       fromAndToHaveNode: (model.getSequence()[indexFrom] !== null) && (model.getSequence()[indexTo] !== null),
-      hasEdge: modelCell.getEdgeIfConnected() !== null
+      hasEdge: modelCell.getEdgeIfConnected() !== null,
+      selected: NodeOrEdgeSelection.isCellSelectedInEditor(indexFrom, indexTo, model, this.selection)
     }
   }
 }
@@ -163,6 +209,7 @@ interface Position {
   backgroundClass: BackgroundClass
   nodeId: string | null
   fillOptions: string[]
+  selected: boolean
 }
 
 interface Cell {
@@ -171,6 +218,7 @@ interface Cell {
   backgroundClass: BackgroundClass
   fromAndToHaveNode: boolean,
   hasEdge: boolean
+  selected: boolean
 }
 
 export enum BackgroundClass {
@@ -178,3 +226,5 @@ export enum BackgroundClass {
   ODD = "odd",
   DOUBLE_ODD = "doubleOdd"
 }
+
+type SelectionGetter = (index: number, model: NodeSequenceEditor) => boolean

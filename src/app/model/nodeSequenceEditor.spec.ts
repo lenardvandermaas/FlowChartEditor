@@ -1,5 +1,6 @@
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
-import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator  } from "./graph"
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse, NodeOrEdgeSelection } from "./nodeSequenceEditor";
+import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator, Graph  } from "./graph"
+import { NodeSequenceEditorBuilder } from "./horizontalGrouping";
 
 function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
@@ -8,8 +9,8 @@ function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   g.addExistingNode(newTestNode('4C'))
   g.addExistingNode(newTestNode('3D'))
   g.addExistingNode(newTestNode('2E'))
-  g.addEdge(newEdge(g.getNodeById('1A')!, g.getNodeById('4C')!))
-  g.addEdge(newEdge(g.getNodeById('5B')!, g.getNodeById('2E')!))
+  g.addEdge(createNewEdge(g.getNodeById('1A')!, g.getNodeById('4C')!))
+  g.addEdge(createNewEdge(g.getNodeById('5B')!, g.getNodeById('2E')!))
   const m = new Map<string, number>([
     ['1A', 0],
     ['5B', 0],
@@ -24,7 +25,7 @@ function newTestNode(id: string): Node {
   return new ConcreteNode(0, id, '', '')
 }
 
-function newEdge(nodeFrom: Node, nodeTo: Node): Edge {
+function createNewEdge(nodeFrom: Node, nodeTo: Node): Edge {
   return new ConcreteEdge(0, nodeFrom, nodeTo, '')
 }
 
@@ -40,8 +41,8 @@ function addEdgesToSimple(g: ConcreteGraphBase) {
   g.addExistingNode(newTestNode('C'))
   g.addExistingNode(newTestNode('D'))
   g.addExistingNode(newTestNode('E'))
-  g.addEdge(newEdge(g.getNodeById('A')!, g.getNodeById('C')!))
-  g.addEdge(newEdge(g.getNodeById('B')!, g.getNodeById('E')!))
+  g.addEdge(createNewEdge(g.getNodeById('A')!, g.getNodeById('C')!))
+  g.addEdge(createNewEdge(g.getNodeById('B')!, g.getNodeById('E')!))
 }
 
 function simpleNodeToLayerMap(): Map<string, number> {
@@ -290,3 +291,102 @@ describe('NodeSequenceEditor', () => {
     expect(instance.getOrderedOmittedNodesInLayer(1).map(n => n.getId())).toEqual(['C'])
   }
 })
+
+describe('NodeOrEdgeSelection', () => {
+  it ('Select node and undo again', () => {
+    const g = getSelectionTestModel()
+    let instance = NodeOrEdgeSelection.create()
+    checkNothingSelected(instance, g)
+    instance.selectNode('N1', g)
+    checkNodeN1SelectedCorrectly(instance, g)
+    instance.selectNode('N2', g)
+    expect(instance.isNodeSelectedInDrawing('N2', g)).toBe(true)
+    instance.selectNode('N2', g)
+    checkNothingSelected(instance, g)
+  })
+
+  it('Select edge and undo again', () => {
+    const g = getSelectionTestModel()
+    let instance = NodeOrEdgeSelection.create()
+    checkNothingSelected(instance, g)
+    instance.selectEdge('Start-N1', g)
+    checkEdgeStartN1SelectedCorrectly(instance, g)
+    instance.selectNode('N1', g)
+    checkNodeN1SelectedCorrectly(instance, g)
+    instance.selectEdge('Start-N1', g)
+    checkEdgeStartN1SelectedCorrectly(instance, g)
+    instance.selectEdge('Start-N1', g)
+    checkNothingSelected(instance, g)
+  })
+})
+
+function getSelectionTestModel(): NodeSequenceEditor {
+  const b = new ConcreteGraphBase()
+  newNode('Start', b)
+  newNode('N1', b)
+  newNode('N2', b)
+  newNode('End', b)
+  insertNewEdge('Start', 'N1', b)
+  insertNewEdge('Start', 'N2', b)
+  insertNewEdge('N1', 'End', b)
+  insertNewEdge('N2', 'End', b)
+  const layerMap: Map<string, number> = new Map([
+    ['Start', 0],
+    ['N1', 1],
+    ['N2', 1],
+    ['End', 2]
+  ])
+  const builder = new NodeSequenceEditorBuilder(layerMap, b)
+  return builder.build()
+}
+
+function checkNothingSelected(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N1', 'N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+  });
+  ['Start-N1', 'Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+  })
+}
+
+function checkNodeN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+  });
+  expect(instance.isNodeSelectedInDrawing('N1', m)).toBe(true);
+  ['Start-N1', 'N1-End'].forEach(edgeKey => {
+    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(true)
+  });
+  ['Start-N2', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+  });
+}
+
+function checkEdgeStartN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N1'].forEach(nodeId => {
+    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(true)
+  });
+  ['N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeSelectedInDrawing(nodeId, m)).toBe(false)
+  });
+  expect(instance.isEdgeSelectedInDrawing('Start-N1', m)).toBe(true);
+  ['Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeSelectedInDrawing(edgeKey, m)).toBe(false)
+  })
+}
+
+function newNode(id: string, g: ConcreteGraphBase) {
+  g.addNode(id, '', '')
+}
+
+function insertNewEdge(fromId: string, toId: string, b: ConcreteGraphBase) {
+  const from: Node | undefined = b.getNodeById(fromId)
+  const to: Node | undefined = b.getNodeById(toId)
+  if (from === undefined) {
+    throw new Error(`Invalid test case, node with id ${fromId} does not exist`)
+  }
+  if (to === undefined) {
+    throw new Error(`Invalid test case, node with id ${toId} does not exist`)
+  }
+  b.connect(from!, to!, '')
+}

@@ -357,3 +357,136 @@ function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer
   }
   return layerStartPositions
 }
+
+
+// If a node has been selected, all its incoming and outgoing
+// edges should also be highlighted.
+//
+// If an edge has been selected, the nodes it connects
+// should also be highlighted.
+export class NodeOrEdgeSelection {
+  private constructor (
+    private selectedNodeId: string | null,
+    private selectedEdgeKey: string | null
+  ) {}
+
+  static create() {
+    return new NodeOrEdgeSelection(null, null)
+  }
+
+  static copy(other: NodeOrEdgeSelection) {
+    return new NodeOrEdgeSelection(other.selectedNodeId, other.selectedEdgeKey)
+  }
+
+  selectNode(id: string, m: NodeSequenceEditor) {
+    this.checkNodeId(id, m)
+    if (this.selectedNodeId === id) {
+      this.deselect()
+    } else {
+      this.deselect()
+      this.selectedNodeId = id
+    }
+  }
+
+  selectEdge(key: string, m: NodeSequenceEditor) {
+    this.checkEdgeKey(key, m)
+    if (this.selectedEdgeKey === key) {
+      this.deselect()
+    } else {
+      this.deselect()
+      this.selectedEdgeKey = key
+    }
+  }
+
+  isNodeSelectedInDrawing(nodeId: string, m: NodeSequenceEditor): boolean {
+    this.checkNodeId(nodeId, m)
+    if (nodeId === this.selectedNodeId) {
+      return true
+    }
+    if (this.selectedEdgeKey !== null) {
+      const selectedEdge = m.getEdgeByKey(this.selectedEdgeKey)!
+      const connectedNodeIds = [selectedEdge.getFrom(), selectedEdge.getTo()]
+        .map(n => n.getId())
+      if (connectedNodeIds.indexOf(nodeId) >= 0) {
+        return true
+      }
+    }
+    return false
+  }
+
+  isEdgeSelectedInDrawing(edgeKey: string, m: NodeSequenceEditor): boolean {
+    this.checkEdgeKey(edgeKey, m)
+    if (this.selectedEdgeKey === edgeKey) {
+      return true
+    }
+    if (this.selectedNodeId !== null) {
+      const connectedEdgeKeys: string[] =
+        [m.getOrderedEdgesStartingFrom(this.selectedNodeId), m.getOrderedEdgesLeadingTo(this.selectedNodeId)]
+        .flat()
+        .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
+      if (connectedEdgeKeys.indexOf(edgeKey) >= 0) {
+        return true
+      }
+    }
+    return false
+  }
+
+  static isFromPositionSelectedInEditor(fromPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
+    return NodeOrEdgeSelection.isPositionSelectedInEditor(fromPosition, e => e.getFrom(), m, context)
+  }
+
+  private static isPositionSelectedInEditor(position: number, edgeDirection: (e: Edge) => Node, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
+    const nodeQuery: OptionalNode = m.getSequence()[position]
+    if (nodeQuery === null) {
+      return false
+    }
+    if (context.selectedNodeId === nodeQuery.getId()) {
+      return true
+    }
+    if (context.selectedEdgeKey !== null) {
+      const selectedEdge: Edge = m.getEdgeByKey(context.selectedEdgeKey)!
+      const refNode: Node = edgeDirection(selectedEdge)
+      if (nodeQuery.getId() === refNode.getId()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  static isToPositionSelectedInEditor(toPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
+    return NodeOrEdgeSelection.isPositionSelectedInEditor(toPosition, e => e.getTo(), m, context)
+  }
+
+  static isCellSelectedInEditor(fromPosition: number, toPosition: number, m: NodeSequenceEditor, context: NodeOrEdgeSelection): boolean {
+    if (context.selectedNodeId !== null) {
+      return NodeOrEdgeSelection.isFromPositionSelectedInEditor(fromPosition, m, context) || NodeOrEdgeSelection.isToPositionSelectedInEditor(toPosition, m, context)
+    } else {
+      const optionalFromNode: OptionalNode = m.getSequence()[fromPosition]
+      const optionalToNode: OptionalNode = m.getSequence()[toPosition]
+      if ( (optionalFromNode !== null) && (optionalToNode !== null) ) {
+        const keyQuery = getEdgeKey(optionalFromNode, optionalToNode)
+        if (keyQuery === context.selectedEdgeKey) {
+          return true
+        }
+      }
+      return false
+    }
+  }
+
+  private deselect() {
+    this.selectedNodeId = null
+    this.selectedEdgeKey = null
+  }
+
+  private checkNodeId(id: string, m: NodeSequenceEditor) {
+    if (m.getNodeById(id) === undefined) {
+      throw new Error(`No node with id ${id} exists in graph`)
+    }
+  }
+
+  private checkEdgeKey(key: string, m: NodeSequenceEditor) {
+    if (m.getEdgeByKey(key) === undefined) {
+      throw new Error(`No edge with key ${key} exists in graph`)
+    }
+  }
+}
