@@ -1,4 +1,4 @@
-import { Node, Graph, GraphBase, Edge, ConcreteGraphBase, GraphConnectionsDecorator } from './graph'
+import { Node, Graph, GraphBase, Edge, ConcreteGraphBase, GraphConnectionsDecorator, getEdgeKey } from './graph'
 import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from './nodeSequenceEditor'
 import { getRange } from '../util/util'
 
@@ -79,6 +79,10 @@ export class EdgeForEditor implements Edge {
 
   getTo(): Node {
     return this.to
+  }
+
+  getKey(): string {
+    return getEdgeKey(this.from, this.to)
   }
 }
 

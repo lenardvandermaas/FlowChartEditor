@@ -1,4 +1,4 @@
-import { ConcreteEdge, ConcreteGraphBase, ConcreteNode, Edge, GraphBase, Node, OptionalNode, getEdgeKey } from "../model/graph";
+import { ConcreteEdge, ConcreteGraphBase, ConcreteNode, Edge, GraphBase, Node, NodeOrEdge, OptionalNode, getEdgeKey } from "../model/graph";
 import { CreationReason, EdgeForEditor, NodeForEditor, OriginalNode } from "../model/horizontalGrouping";
 import { NodeSequenceEditor } from "../model/nodeSequenceEditor";
 import { Interval } from "../util/interval";
@@ -117,6 +117,10 @@ export class PlacedEdge implements Edge {
   getTo(): PlacedNode {
     return this.toNode
   }
+
+  getKey(): string {
+    return this.key
+  }
 }
 
 export class Layout implements GraphBase {
@@ -156,6 +160,10 @@ export class Layout implements GraphBase {
 
   getEdgeByKey(key: string): Edge | undefined {
     return this.delegate.getEdgeByKey(key)
+  }
+
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    return this.delegate.parseNodeOrEdgeId(id)
   }
 
   getNumCrossingLines(): number {

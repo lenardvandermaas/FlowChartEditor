@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
 import { Drawing, FrankFlowchartComponent, Line, Rectangle, getEmptyDrawing } from '../frank-flowchart/frank-flowchart.component';
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
-import { GraphBase, Graph, GraphConnectionsDecorator, ConcreteNode, Edge, getEdgeKey, NodeCaptionChoice, getCaption } from '../../model/graph';
+import { GraphBase, Graph, GraphConnectionsDecorator, NodeCaptionChoice, getCaption } from '../../model/graph';
 import { calculateLayerNumbers, CreationReason, NodeForEditor, NodeSequenceEditorBuilder, OriginalNode } from '../../model/horizontalGrouping';
 import { NodeOrEdgeSelection, NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
@@ -105,7 +105,7 @@ export class FlowChartEditorComponent {
       .map(edge => { return {
         id: edge.key, x1: edge.line.startPoint.x, y1: edge.line.startPoint.y,
         x2: edge.line.endPoint.x, y2: edge.line.endPoint.y,
-        selected: this.selectionInModel.isEdgeHighlightedInDrawing(getEdgeKey(edge.getFrom(), edge.getTo()), this.layoutModel!)
+        selected: this.selectionInModel.isEdgeHighlightedInDrawing(edge.getKey(), this.layoutModel!)
       }})
     this.drawing = {width: layout.width, height: layout.height, rectangles, lines}
   }

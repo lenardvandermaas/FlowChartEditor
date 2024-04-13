@@ -5,7 +5,7 @@
 // Managing how to choose the sequence of nodes within a layer is also
 // supported here.
 
-import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph } from './graph'
+import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph, NodeOrEdge } from './graph'
 import { getRange } from '../util/util'
 
 export enum UpdateResponse {
@@ -19,6 +19,7 @@ export interface NodeSequenceEditor {
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
   getEdgeByKey(key: string): Edge | undefined
+  parseNodeOrEdgeId(id: string): NodeOrEdge
   getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
   getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
   getSuccessors(nodeId: string): readonly Node[]
@@ -102,6 +103,10 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
 
   getEdgeByKey(key: string): Edge | undefined {
     return this.graph.getEdgeByKey(key)
+  }
+
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    return this.graph.parseNodeOrEdgeId(id)
   }
 
   getNumLayers(): number {
@@ -479,7 +484,7 @@ class NodeOrEdgeSelectionStatePosition implements NodeOrEdgeSelectionState {
     const edgeKeysOnSelectedNode: string[] =
       [model.getOrderedEdgesStartingFrom(id), model.getOrderedEdgesLeadingTo(id)]
       .flat()
-      .map(edge => getEdgeKey(edge.getFrom(), edge.getTo()))
+      .map(edge => edge.getKey())
     if (edgeKeysOnSelectedNode.indexOf(key) >= 0) {
       return true
     }
@@ -541,7 +546,7 @@ class NodeOrEdgeSelectionStateCell implements NodeOrEdgeSelectionState {
   isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
     const modelData = this.getModelData(model)
     return (modelData.optionalSelectedEdge !== null)
-      && (key === getEdgeKey(modelData.optionalSelectedEdge.getFrom(), modelData.optionalSelectedEdge.getTo()))
+      && (key === modelData.optionalSelectedEdge.getKey())
   }
 
   isSelectPositionUndoes(index: number): boolean {

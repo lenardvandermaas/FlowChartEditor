@@ -3,7 +3,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
 import { CommonModule, NgFor } from '@angular/common'
 import { NodeSequenceEditor, NodeSequenceEditorCell, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
-import { NodeCaptionChoice, OptionalNode, getCaption, getEdgeKey } from '../../model/graph';
+import { NodeCaptionChoice, NodeOrEdge, OptionalNode, getCaption } from '../../model/graph';
 import { Observable, Subscription } from 'rxjs';
 
 @Component({
@@ -71,10 +71,15 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
   }
 
   private static itemClicked(itemClicked: string, context: SequenceEditorComponent) {
-    if (itemClicked.indexOf('-') >= 0) {
-      context.selectEdgeKey(itemClicked)
-    } else {
-      context.selectNodeId(itemClicked)
+    if (context.model === null) {
+      return
+    }
+    const item: NodeOrEdge = context.model!.parseNodeOrEdgeId(itemClicked)
+    if (item.optionalEdge !== null) {
+      context.selectEdgeKey(item.optionalEdge.getKey())
+    }
+    if (item.optionalNode !== null) {
+      context.selectNodeId(item.optionalNode.getId())
     }
   }
 
