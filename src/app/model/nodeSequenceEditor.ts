@@ -414,6 +414,25 @@ export class NodeOrEdgeSelection {
     }
   }
 
+  selectNodeId(nodeId: string, model: NodeSequenceEditor) {
+    const position: number | null = model.optionalPositionOfNode(nodeId)
+    if (position !== null) {
+      this.selectPosition(position, model)
+    }
+  }
+
+  selectEdgeKey(key: string, model: NodeSequenceEditor) {
+    const edge: Edge | undefined = model.getEdgeByKey(key)
+    if (edge === undefined) {
+      return
+    }
+    const indexFrom = model.optionalPositionOfNode(edge.getFrom().getId())
+    const indexTo = model.optionalPositionOfNode(edge.getTo().getId())
+    if ( (indexFrom !== null) && (indexTo !== null)) {
+      this.selectCell(indexFrom, indexTo, model)
+    }
+  }
+
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return this.state.isFromPositionHighlightedInEditor(index, model)
   }

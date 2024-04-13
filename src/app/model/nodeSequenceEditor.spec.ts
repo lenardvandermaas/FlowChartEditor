@@ -304,7 +304,7 @@ describe('NodeSequenceEditor', () => {
 })
 
 describe('NodeOrEdgeSelection', () => {
-  it ('Select node and undo again', () => {
+  it ('Select position and undo again', () => {
     const m = getSelectionTestModel()
     expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
     let instance = new NodeOrEdgeSelection()
@@ -317,7 +317,7 @@ describe('NodeOrEdgeSelection', () => {
     checkNothingSelected(instance, m)
   })
 
-  it('Select edge and undo again', () => {
+  it('Select cell and undo again', () => {
     const m = getSelectionTestModel()
     expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
     let instance = new NodeOrEdgeSelection()
@@ -329,6 +329,34 @@ describe('NodeOrEdgeSelection', () => {
     instance.selectCell(0, 1, m)
     checkEdgeStartN1SelectedCorrectly(instance, m)
     instance.selectCell(0, 1, m)
+    checkNothingSelected(instance, m)
+  })
+
+  it ('Select node id and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectNodeId('N1', m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectNodeId('N2', m)
+    expect(instance.isFromPositionHighlightedInEditor(2, m)).toBe(true)
+    instance.selectNodeId('N2', m)
+    checkNothingSelected(instance, m)
+  })
+
+  it('Select edge key and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectNodeId('N1', m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
     checkNothingSelected(instance, m)
   })
 })

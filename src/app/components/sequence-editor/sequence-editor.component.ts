@@ -116,10 +116,9 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
   }
 
   selectNodeId(nodeId: string) {
-    const index: number | null = this.model!.optionalPositionOfNode(nodeId)
-    if (index !== null) {
-      this.selectNode(index)
-    }
+    this.selection.selectNodeId(nodeId, this.model!)
+    this.view = this.getView()
+    this.onChanged.emit(true)
   }
 
   selectNode(index: number) {
@@ -132,14 +131,9 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
   }
 
   selectEdgeKey(key: string) {
-    const components = key.split('-')
-    const fromId = components[0]
-    const toId = components[1]
-    const indexFrom = this.model!.optionalPositionOfNode(fromId)
-    const indexTo = this.model!.optionalPositionOfNode(toId)
-    if ( (indexFrom !== null) && (indexTo !== null)) {
-      this.selectCell(indexFrom, indexTo)
-    }
+    this.selection.selectEdgeKey(key, this.model!)
+    this.view = this.getView()
+    this.onChanged.emit(true)
   }
 
   selectCell(indexFrom: number, indexTo: number) {
