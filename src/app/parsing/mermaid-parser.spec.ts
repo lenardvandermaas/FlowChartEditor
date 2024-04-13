@@ -75,12 +75,14 @@ d2e2 --> |success| d2e12
   })
 
   function checkNodePointsTo(fromId: string, toIds: string[], g: Graph) {
-    let toEdges: readonly Edge[] = g.getOrderedEdgesStartingFrom(fromId)
+    let from: Node = g.getNodeById(fromId)!
+    let toEdges: readonly Edge[] = g.getOrderedEdgesStartingFrom(from)
     expect(toEdges.map(edge => edge.getTo()).map(n => n.getId())).toEqual(toIds)
   }
 
   function checkNodeReachedFrom(toId: string, fromIds: string[], g: Graph) {
-    let fromEdges: readonly Edge[] = g.getOrderedEdgesLeadingTo(toId)
+    let to: Node = g.getNodeById(toId)!
+    let fromEdges: readonly Edge[] = g.getOrderedEdgesLeadingTo(to)
     expect(fromEdges.map(edge => edge.getFrom()).map(n => n.getId())).toEqual(fromIds)
   }
 });

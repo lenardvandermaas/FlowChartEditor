@@ -31,13 +31,31 @@ describe('Graph test', () => {
   })
 
   function checkNodePointsTo(fromId: string, toIds: string[], g: Graph) {
-    const successors: readonly Node[] = g.getSuccessors(fromId)
+    const from: Node = g.getNodeById(fromId)!
+    const successors: readonly Node[] = g.getSuccessors(from)
     expect(successors.map(n => n.getId())).toEqual(toIds)
   }
 
   function checkNodeReachedFrom(toId: string, fromIds: string[], g: Graph) {
-    let predecessors: readonly Node[] = g.getPredecessors(toId)
+    let to: Node = g.getNodeById(toId)!
+    let predecessors: readonly Node[] = g.getPredecessors(to)
     expect(predecessors.map(n => n.getId())).toEqual(fromIds)
+  }
+
+  function newNode(id: string, g: ConcreteGraphBase) {
+    g.addNode(id, '', '')
+  }
+
+  function newEdge(fromId: string, toId: string, g: ConcreteGraphBase) {
+    const from: Node | undefined = g.getNodeById(fromId)
+    const to: Node | undefined = g.getNodeById(toId)
+    if (from === undefined) {
+      throw new Error(`Invalid test case, node with id ${fromId} does not exist`)
+    }
+    if (to === undefined) {
+      throw new Error(`Invalid test case, node with id ${toId} does not exist`)
+    }
+    g.connect(from!, to!, '')
   }
 
   it('getCaption', () => {
@@ -46,19 +64,3 @@ describe('Graph test', () => {
     expect(getCaption(n, NodeCaptionChoice.TEXT)).toBe('My text')
   })
 })
-
-function newNode(id: string, g: ConcreteGraphBase) {
-  g.addNode(id, '', '')
-}
-
-function newEdge(fromId: string, toId: string, g: ConcreteGraphBase) {
-  const from: Node | undefined = g.getNodeById(fromId)
-  const to: Node | undefined = g.getNodeById(toId)
-  if (from === undefined) {
-    throw new Error(`Invalid test case, node with id ${fromId} does not exist`)
-  }
-  if (to === undefined) {
-    throw new Error(`Invalid test case, node with id ${toId} does not exist`)
-  }
-  g.connect(from!, to!, '')
-}

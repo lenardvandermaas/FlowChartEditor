@@ -15,7 +15,14 @@ export enum UpdateResponse {
 
 type OptionalString = string | null
 
-export interface NodeSequenceEditor extends Graph {
+export interface NodeSequenceEditor {
+  getNodeById(id: string): Node | undefined
+  getEdges(): readonly Edge[]
+  getEdgeByKey(key: string): Edge | undefined
+  getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
+  getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
+  getSuccessors(nodeId: string): readonly Node[]
+  getPredecessors(nodeId: string): readonly Node[]
   getNumLayers(): number
   getLayerOfPosition(position: number): number
   getLayerOfNode(node: Node): number
@@ -85,10 +92,6 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     })
   }
 
-  getNodes(): readonly Node[] {
-    return this.graph.getNodes()
-  }
-
   getNodeById(id: string): Node | undefined {
     return this.graph.getNodeById(id)
   }
@@ -107,22 +110,22 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
 
   getOrderedEdgesStartingFrom(startId: string): readonly Edge[] {
     this.checkNodeId(startId)
-    return this.graph.getOrderedEdgesStartingFrom(startId)
+    return this.graph.getOrderedEdgesStartingFrom(this.getNodeById(startId)!)
   }
 
   getOrderedEdgesLeadingTo(endId: string): readonly Edge[] {
     this.checkNodeId(endId)
-    return this.graph.getOrderedEdgesLeadingTo(endId)
+    return this.graph.getOrderedEdgesLeadingTo(this.getNodeById(endId)!)
   }
 
   getSuccessors(nodeId: string): readonly Node[] {
     this.checkNodeId(nodeId)
-    return this.graph.getSuccessors(nodeId)
+    return this.graph.getSuccessors(this.getNodeById(nodeId)!)
   }
 
   getPredecessors(nodeId: string): readonly Node[] {
     this.checkNodeId(nodeId)
-    return this.graph.getPredecessors(nodeId)
+    return this.graph.getPredecessors(this.getNodeById(nodeId)!)
   }
 
   getLayerOfPosition(position: number): number {
