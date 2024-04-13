@@ -6,7 +6,7 @@
 // supported here.
 
 import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph, NodeOrEdge } from './graph'
-import { getRange } from '../util/util'
+import { getRange, rotateToSwapItems } from '../util/util'
 
 export enum UpdateResponse {
   ACCEPTED = "accepted",
@@ -30,7 +30,8 @@ export interface NodeSequenceEditor {
   getPositionsInLayer(layerNumber: number): number[]
   getSequence(): readonly OptionalNode[]
   getSequenceInLayer(layerNumber: number): readonly OptionalNode[]
-  rotateToSwap(posFrom: number, posTo: number): UpdateResponse
+  // Returns array with old index as key, new index as value
+  rotateToSwap(posFrom: number, posTo: number): number[]
   omitNodeFrom(position: number): UpdateResponse
   reintroduceNode(position: number, node: Node): UpdateResponse
   getOrderedOmittedNodes(): readonly Node[]
@@ -173,34 +174,19 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     return this.getPositionsInLayer(layerNumber).map(index => this.getSequence()[index])
   }
 
-  rotateToSwap(posFrom: number, posTo: number): UpdateResponse {
+  rotateToSwap(posFrom: number, posTo: number): number[] {
     this.checkPosition(posFrom)
     this.checkPosition(posTo)
     const layerFrom = this.getLayerOfPosition(posFrom)
     const layerTo = this.getLayerOfPosition(posTo)
-    if (posFrom === posTo) {
-      // Nothing to do
-      return UpdateResponse.ACCEPTED
-    }
     if (layerFrom !== layerTo) {
-      return UpdateResponse.REJECTED
+      // The permutation that does nothing
+      return getRange(0, this.sequence.length)
     }
-    const carry: OptionalString = this.sequence[posFrom]
-    this.rotate(posFrom, posTo)
-    this.sequence[posTo] = carry
-    return UpdateResponse.ACCEPTED
-  }
-
-  private rotate(posFrom: number, posTo: number) {
-    if (posFrom < posTo) {
-      for (let index = posFrom + 1; index <= posTo; ++index) {
-        this.sequence[index - 1] = this.sequence[index]
-      }  
-    } else if (posFrom > posTo) {
-      for(let index = posFrom - 1; index >= posTo; --index) {
-        this.sequence[index + 1] = this.sequence[index]
-      }  
-    }
+    let newSequence: OptionalString[] = [ ... this.sequence]
+    const permutation = rotateToSwapItems(newSequence, posFrom, posTo)
+    this.sequence = newSequence
+    return permutation
   }
 
   omitNodeFrom(position: number): UpdateResponse {
@@ -386,6 +372,7 @@ function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer
 // should also be highlighted.
 
 interface NodeOrEdgeSelectionState {
+  followPermutation(permutation: number[], model: NodeSequenceEditor): void
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
   isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
   isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean
@@ -397,6 +384,10 @@ interface NodeOrEdgeSelectionState {
 
 export class NodeOrEdgeSelection {
   private state: NodeOrEdgeSelectionState = new NodeOrEdgeSelectionStateDefault()
+
+  clear() {
+    this.state = new NodeOrEdgeSelectionStateDefault()
+  }
 
   selectPosition(index: number, model: NodeSequenceEditor) {
     if (this.state.isSelectPositionUndoes(index)) {
@@ -433,6 +424,13 @@ export class NodeOrEdgeSelection {
     }
   }
 
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    if (permutation.length != model.getSequence().length) {
+      throw new Error(`Invalid permutation ${permutation} because model has ${model.getSequence().length} positions`)
+    }
+    this.state.followPermutation(permutation, model)
+  }
+
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return this.state.isFromPositionHighlightedInEditor(index, model)
   }
@@ -455,6 +453,9 @@ export class NodeOrEdgeSelection {
 }
 
 class NodeOrEdgeSelectionStateDefault implements NodeOrEdgeSelectionState {
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+  }
+
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return false
   }
@@ -488,6 +489,10 @@ class NodeOrEdgeSelectionStatePosition implements NodeOrEdgeSelectionState {
   constructor(
     private position: number,
   ) {}
+
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    this.position = permutation[this.position]
+  }
 
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
     return index === this.position
@@ -551,6 +556,11 @@ class NodeOrEdgeSelectionStateCell implements NodeOrEdgeSelectionState {
       optionalSelectedEdge = null
     }
     return {optionalFromNode, optionalToNode, optionalSelectedEdge}
+  }
+
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    this.indexFrom = permutation[this.indexFrom]
+    this.indexTo = permutation[this.indexTo]
   }
 
   isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {

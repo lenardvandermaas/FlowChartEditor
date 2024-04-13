@@ -142,7 +142,10 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node upward, rotating the nodes in between', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 2)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    instance.rotateToSwap(0, 2)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['B', 'E', 'A'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
     expect(instance.getSequence().map(n => n!.getId())).toEqual(['B', 'E', 'A', 'C', 'D'])
@@ -152,7 +155,10 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node downward, rotating the nodes in between', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(2, 0)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    instance.rotateToSwap(2, 0)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['E', 'A', 'B'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
     expect(instance.getSequence().map(n => n!.getId())).toEqual(['E', 'A', 'B', 'C', 'D'])
@@ -162,7 +168,11 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node up to swap with adjacent', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(3, 4)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    expect(instance.rotateToSwap(3, 4)).toEqual([0, 1, 2, 4, 3])
+    expect(instance.getSequence().map(node => node?.getId())).toEqual(['A', 'B', 'E', 'D', 'C'])
     checkAfterSwapping(instance)
   })
 
@@ -176,7 +186,7 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node down to swap with adjacent', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(4, 3)).toBe(UpdateResponse.ACCEPTED)
+    instance.rotateToSwap(4, 3)
     checkAfterSwapping(instance)
   })
 
@@ -234,13 +244,14 @@ describe('NodeSequenceEditor', () => {
 
   it('Check rotateToSwap swapping same node does nothing', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 0)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.rotateToSwap(0, 0)).toEqual([0, 1, 2, 3, 4])
     checkInitialState(instance)
   })
 
   it('Check rotateToSwap swapping nodes from different layers is rejected', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 3)).toBe(UpdateResponse.REJECTED)
+    // Expect the permutation that does nothing
+    expect(instance.rotateToSwap(0, 3)).toEqual([0, 1, 2, 3, 4])
     checkInitialState(instance)
   })
 

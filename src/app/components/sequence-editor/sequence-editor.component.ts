@@ -42,11 +42,15 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
   @Input()
   set model(model: NodeSequenceEditor | null) {
     this._model = model
+    // If the model has less positions, we would
+    // have invalid positions if we did not clear.
+    this.selection.clear()
     if (this.model === null) {
       this.view = this.getEmptyView()
     } else {
       this.view = this.getView()
     }
+    this.onChanged.emit(true)
   }
 
   getEmptyView(): View {
@@ -91,7 +95,8 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
     if (this.model !== null) {
       const indexFrom = $event.previousIndex
       const indexTo = $event.currentIndex
-      this.model.rotateToSwap(indexFrom, indexTo)
+      const permutation: number[] = this.model.rotateToSwap(indexFrom, indexTo)
+      this.selection.followPermutation(permutation, this.model)
       this.view = this.getView()
       this.onChanged.emit(true)
     }
