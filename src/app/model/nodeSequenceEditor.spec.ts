@@ -291,6 +291,16 @@ describe('NodeSequenceEditor', () => {
     expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['A'])
     expect(instance.getOrderedOmittedNodesInLayer(1).map(n => n.getId())).toEqual(['C'])
   }
+
+  it('optionalPositionOfNode', () => {
+    const instance: ConcreteNodeSequenceEditor = getSimpleInstance();
+    ['A', 'B', 'E', 'C', 'D'].forEach((nodeId, expectedPosition) => {
+      expect(instance.optionalPositionOfNode(nodeId)).toEqual(expectedPosition)
+    })
+    expect(instance.optionalPositionOfNode('X')).toEqual(null)
+    instance.omitNodeFrom(0)
+    expect(instance.optionalPositionOfNode('A')).toEqual(null)
+  })
 })
 
 describe('NodeOrEdgeSelection', () => {

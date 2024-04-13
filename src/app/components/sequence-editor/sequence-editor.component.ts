@@ -70,6 +70,7 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
     this.subscription?.unsubscribe()
   }
 
+  // With a non-static method, this could not be used to observe the itemClickedObservable.
   private static itemClicked(itemClicked: string, context: SequenceEditorComponent) {
     if (context.model === null) {
       return
@@ -115,19 +116,10 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
   }
 
   selectNodeId(nodeId: string) {
-    if (this.model === null) {
-      return
-    }
-    const index: number = this.positionOfNode(nodeId)
-    if (index >= 0) {
+    const index: number | null = this.model!.optionalPositionOfNode(nodeId)
+    if (index !== null) {
       this.selectNode(index)
     }
-  }
-
-  private positionOfNode(nodeId: string): number {
-    return this.model!.getSequence()
-      .map(n => n === null ? null : n.getId())
-      .indexOf(nodeId)
   }
 
   selectNode(index: number) {
@@ -143,9 +135,9 @@ export class SequenceEditorComponent implements OnInit, OnDestroy {
     const components = key.split('-')
     const fromId = components[0]
     const toId = components[1]
-    const indexFrom = this.positionOfNode(fromId)
-    const indexTo = this.positionOfNode(toId)
-    if ( (indexFrom >= 0) && (indexTo >= 0)) {
+    const indexFrom = this.model!.optionalPositionOfNode(fromId)
+    const indexTo = this.model!.optionalPositionOfNode(toId)
+    if ( (indexFrom !== null) && (indexTo !== null)) {
       this.selectCell(indexFrom, indexTo)
     }
   }

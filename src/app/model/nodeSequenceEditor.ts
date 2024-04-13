@@ -36,6 +36,7 @@ export interface NodeSequenceEditor {
   getOrderedOmittedNodes(): readonly Node[]
   getOrderedOmittedNodesInLayer(layerNumber: number): readonly Node[]
   getCell(positionFrom: number, positionTo: number): NodeSequenceEditorCell
+  optionalPositionOfNode(nodeId: string): number | null
 }
 
 export interface NodeSequenceEditorCell {
@@ -277,6 +278,17 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
       }
     }
     return new ConcreteNodeSequenceCell(positionFrom, positionTo, layerFrom, layerTo, optionalEdge)
+  }
+
+  optionalPositionOfNode(nodeId: string): number | null {
+    const indexOfResult: number = this.getSequence()
+      .map(n => n === null ? null : n.getId())
+      .indexOf(nodeId)
+    if (indexOfResult >= 0) {
+      return indexOfResult
+    } else {
+      return null
+    }
   }
 
   private checkPosition(position: number) {
