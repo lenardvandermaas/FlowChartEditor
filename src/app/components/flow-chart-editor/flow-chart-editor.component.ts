@@ -6,9 +6,9 @@ import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator, NodeCaptionChoice, getCaption } from '../../model/graph';
 import { calculateLayerNumbers, CreationReason, NodeForEditor, NodeSequenceEditorBuilder, OriginalNode } from '../../model/horizontalGrouping';
 import { NodeOrEdgeSelection, NodeSequenceEditor } from '../../model/nodeSequenceEditor';
-import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
-import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
-import { Dimensions, DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
+import { NodeLayoutBuilder } from '../../graphics/node-layout';
+import { Layout, PlacedEdge, PlacedNode, Dimensions } from '../../graphics/edge-layout';
+import { DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
 import { Subject } from 'rxjs';
 
 export interface NodeSequenceEditorOrError {
@@ -39,6 +39,9 @@ export class FlowChartEditorComponent {
   }
 
   newChoiceShowNodeText() {
+    if (this.layoutModel === null) {
+      return
+    }
     this.showNodeTextInDrawing = ! this.showNodeTextInDrawing
     this.choiceShowNodeTextInDrawing = this.updateShowNodeTextInDrawing()
     if (this.layoutModel !== null) {
@@ -84,6 +87,9 @@ export class FlowChartEditorComponent {
   }
 
   onSequenceEditorChanged() {
+    if (this.layoutModel === null) {
+      return
+    }
     this.updateDrawing()
   }
 

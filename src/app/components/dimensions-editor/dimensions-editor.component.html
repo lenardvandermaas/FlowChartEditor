@@ -50,6 +50,12 @@
             [(ngModel)]="editDimensions.nodeBoxWidth" type="number" minValue="1"
             [ngClass]="editDimensions.nodeBoxWidth !== lastPosted.nodeBoxWidth ? 'changed' : ''" />
           </td>
+          <tr>
+            <td>Connector area %:</td>
+            <td><input
+              [(ngModel)]="editDimensions.boxConnectorAreaPerc" type="number" minValue="0" maxValue="100"
+              [ngClass]="editDimensions.boxConnectorAreaPerc !== lastPosted.boxConnectorAreaPerc ? 'changed' : ''" />
+            </td>  
         </tr>
       </table>
     </td>
