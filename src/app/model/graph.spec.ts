@@ -2,20 +2,7 @@ import { Node, Edge, ConcreteGraphBase, Graph, GraphConnectionsDecorator, Concre
 
 describe('Graph test', () => {
   it('Calculation of outgoing and incoming edges', () => {
-    const b: ConcreteGraphBase = new ConcreteGraphBase()
-    newNode('Start', b)
-    newNode('Unconnected', b)
-    newNode('N1', b)
-    newNode('N2', b)
-    newNode('N3', b)
-    newNode('End', b)
-    newEdge('Start', 'N1', b)
-    newEdge('Start', 'N2', b)
-    newEdge('N1', 'N3', b)
-    newEdge('N2', 'N3', b)
-    newEdge('N3', 'N2', b)
-    newEdge('N3', 'End', b)
-    const g: Graph = new GraphConnectionsDecorator(b)
+    const g = getTestGraph()
     checkNodePointsTo("Start", ["N1", "N2"], g)
     checkNodeReachedFrom("Start", [], g)
     checkNodePointsTo("N1", ["N3"], g)
@@ -29,6 +16,38 @@ describe('Graph test', () => {
     checkNodePointsTo("Unconnected", [], g)
     checkNodeReachedFrom("Unconnected", [], g)
   })
+
+  it('Parsing node or edge id, and check ConcreteEdge.getKey()', () => {
+    const g: Graph = getTestGraph()
+    expect(g.parseNodeOrEdgeId('Start').optionalNode).not.toEqual(null)
+    expect(g.parseNodeOrEdgeId('Start').optionalEdge).toEqual(null)
+    expect(g.parseNodeOrEdgeId('Start').optionalNode?.getId()).toEqual('Start')
+    expect(g.parseNodeOrEdgeId('Start-N1').optionalNode).toEqual(null)
+    expect(g.parseNodeOrEdgeId('Start-N1').optionalEdge!.getFrom().getId()).toEqual('Start')
+    expect(g.parseNodeOrEdgeId('Start-N1').optionalEdge!.getTo().getId()).toEqual('N1')
+    expect(g.parseNodeOrEdgeId('Start-N1').optionalEdge!.getKey()).toEqual('Start-N1')
+    expect(g.parseNodeOrEdgeId('Start-End').optionalNode).toEqual(null)
+    expect(g.parseNodeOrEdgeId('Start-End').optionalEdge).toEqual(null)
+    expect(g.parseNodeOrEdgeId('xyz').optionalNode).toEqual(null)
+    expect(g.parseNodeOrEdgeId('xyz').optionalEdge).toEqual(null)
+  })
+
+  function getTestGraph(): Graph {
+    const b: ConcreteGraphBase = new ConcreteGraphBase()
+    newNode('Start', b)
+    newNode('Unconnected', b)
+    newNode('N1', b)
+    newNode('N2', b)
+    newNode('N3', b)
+    newNode('End', b)
+    newEdge('Start', 'N1', b)
+    newEdge('Start', 'N2', b)
+    newEdge('N1', 'N3', b)
+    newEdge('N2', 'N3', b)
+    newEdge('N3', 'N2', b)
+    newEdge('N3', 'End', b)
+    return new GraphConnectionsDecorator(b)
+  }
 
   function checkNodePointsTo(fromId: string, toIds: string[], g: Graph) {
     const from: Node = g.getNodeById(fromId)!

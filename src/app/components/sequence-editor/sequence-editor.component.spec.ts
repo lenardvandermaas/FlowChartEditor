@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SequenceEditorComponent, View, BackgroundClass } from './sequence-editor.component';
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../../model/nodeSequenceEditor';
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 
-import { ConcreteGraphBase, GraphConnectionsDecorator } from '../../model/graph';
+import { ConcreteGraphBase, GraphConnectionsDecorator, NodeCaptionChoice } from '../../model/graph';
+import { Subject } from 'rxjs';
 
 describe('SequenceEditorComponent', () => {
   let component: SequenceEditorComponent;
@@ -11,12 +12,13 @@ describe('SequenceEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SequenceEditorComponent]
+      imports: [SequenceEditorComponent],
     })
     .compileComponents();
     
     fixture = TestBed.createComponent(SequenceEditorComponent);
     component = fixture.componentInstance;
+    component.itemClickedObservable = new Subject()
     fixture.detectChanges();
   });
 
@@ -42,7 +44,8 @@ describe('SequenceEditorComponent', () => {
     ])
     const model: NodeSequenceEditor = new ConcreteNodeSequenceEditor(new GraphConnectionsDecorator(b), m)
     model.omitNodeFrom(1)
-    const actual: View = component.getView(model)
+    component.model = model
+    const actual: View = component.getView()
     const expected = getTheView()
     expect(actual).toEqual(expected)
   })
@@ -50,141 +53,157 @@ describe('SequenceEditorComponent', () => {
   function getTheView(): View {
     return {
       header: [
-        {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: []},
-        {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"]},
-        {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: []},
-        {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: []}
+        {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: [], selected: false},
+        {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"], selected: false},
+        {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: [], selected: false},
+        {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: [], selected: false}
       ],
       body: [
         {
-          header: {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: []},
+          header: {position: 0, backgroundClass: BackgroundClass.EVEN, nodeId: "Start", fillOptions: [], selected: false},
           cells: [
             {
               fromPosition: 0,
               toPosition: 0,
               backgroundClass: BackgroundClass.EVEN,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 0,
               toPosition: 1,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 0,
               toPosition: 2,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: true,
-              hasEdge: true
+              hasEdge: true,
+              selected: false
             },
             {
               fromPosition: 0,
               toPosition: 3,
               backgroundClass: BackgroundClass.EVEN,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             }
           ]
         },
         {
-          header: {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"]},
+          header: {position: 1, backgroundClass: BackgroundClass.ODD, nodeId: null, fillOptions: ["N1"], selected: false},
           cells: [
             {
               fromPosition: 1,
               toPosition: 0,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 1,
               toPosition: 1,
               backgroundClass: BackgroundClass.DOUBLE_ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 1,
               toPosition: 2,
               backgroundClass: BackgroundClass.DOUBLE_ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 1,
               toPosition: 3,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             }
           ]
         },
         {
-          header: {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: []},
+          header: {position: 2, backgroundClass: BackgroundClass.ODD, nodeId: "N2", fillOptions: [], selected: false},
           cells: [
             {
               fromPosition: 2,
               toPosition: 0,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 2,
               toPosition: 1,
               backgroundClass: BackgroundClass.DOUBLE_ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 2,
               toPosition: 2,
               backgroundClass: BackgroundClass.DOUBLE_ODD,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 2,
               toPosition: 3,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: true,
-              hasEdge: true
+              hasEdge: true,
+              selected: false
             }
           ]
         },
         {
-          header: {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: []},
+          header: {position: 3, backgroundClass: BackgroundClass.EVEN, nodeId: "End", fillOptions: [], selected: false},
           cells: [
             {
               fromPosition: 3,
               toPosition: 0,
               backgroundClass: BackgroundClass.EVEN,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 3,
               toPosition: 1,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: false,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 3,
               toPosition: 2,
               backgroundClass: BackgroundClass.ODD,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             },
             {
               fromPosition: 3,
               toPosition: 3,
               backgroundClass: BackgroundClass.EVEN,
               fromAndToHaveNode: true,
-              hasEdge: false
+              hasEdge: false,
+              selected: false
             }
           ]
         }

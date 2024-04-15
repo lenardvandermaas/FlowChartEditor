@@ -5,6 +5,7 @@ export interface GraphBase {
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
   getEdgeByKey(id: string): Edge | undefined
+  parseNodeOrEdgeId(id: string): NodeOrEdge
 }
 
 export interface Graph extends GraphBase {
@@ -36,6 +37,22 @@ export class ConcreteGraphBase implements GraphBase {
     return this.edgesByKey.get(key)
   }
 
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    if (id.indexOf('-') >= 0) {
+      const rawEdge: Edge | undefined = this.getEdgeByKey(id)
+      return {
+        optionalNode: null,
+        optionalEdge: rawEdge === undefined ? null : rawEdge
+      }
+    } else {
+      const rawNode: Node | undefined = this.getNodeById(id)
+      return {
+        optionalNode: rawNode === undefined ? null : rawNode,
+        optionalEdge: null
+      }
+    }
+  }
+
   addNode(id: string, text: string, style: string) {
     if (id.includes('-')) {
       throw new Error(`Node id [${id}] is illegal because it contains '-'`)
@@ -54,7 +71,6 @@ export class ConcreteGraphBase implements GraphBase {
     this.nodesById.set(id, node)
   }
   connect(from: Node, to: Node, text?: string) {
-    const key = getEdgeKey(from, to);
     const seq = this.edges.length
     const edge = new ConcreteEdge(seq, from, to, text)
     this.addEdge(edge)
@@ -62,7 +78,7 @@ export class ConcreteGraphBase implements GraphBase {
 
   addEdge(existingEdge: Edge) {
     this.checkEdgeRefersToExistingNodes(existingEdge)
-    let key: string = getEdgeKey(existingEdge.getFrom(), existingEdge.getTo())
+    const key: string = existingEdge.getKey()
     if (this.edgesByKey.has(key)) {
       throw new Error(`Cannot add existing edge with key ${key} because that connection is present already`)
     }
@@ -71,7 +87,7 @@ export class ConcreteGraphBase implements GraphBase {
   }
 
   private checkEdgeRefersToExistingNodes(edge: Edge) {
-    let key = getEdgeKey(edge.getFrom(), edge.getTo())
+    const key = edge.getKey()
     if (! this.nodesById.has(edge.getFrom().getId())) {
       throw new Error(`Illegal edge with key ${key} because referred from node is not in this graph`)
     }
@@ -116,6 +132,10 @@ export class GraphConnectionsDecorator implements Graph {
 
   getEdgeByKey(key: string): Edge | undefined {
     return this.delegate.getEdgeByKey(key)
+  }
+
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    return this.delegate.parseNodeOrEdgeId(id)
   }
 
   getOrderedEdgesStartingFrom(startNode: Node): readonly Edge[] {
@@ -165,6 +185,7 @@ export function getEdgeKey(from: Node, to: Node): string {
 export interface Edge {
   getFrom(): Node
   getTo(): Node
+  getKey(): string
 }
 
 export class ConcreteEdge implements Edge {
@@ -182,6 +203,15 @@ export class ConcreteEdge implements Edge {
   getTo(): Node {
     return this.to
   }
+
+  getKey(): string {
+    return getEdgeKey(this.getFrom(), this.getTo())
+  }
+}
+
+export interface NodeOrEdge {
+  optionalNode: OptionalNode
+  optionalEdge: OptionalEdge
 }
 
 export enum NodeCaptionChoice {

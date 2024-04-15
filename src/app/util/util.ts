@@ -42,3 +42,38 @@ export function sortedUniqNumbers(arg: number[]) {
   })
   return result
 }
+
+export function rotateToSwapItems<T>(target: T[], posFrom: number, posTo: number): number[] {
+  const result = getRotateToSwapPermutation(target.length, posFrom, posTo)
+  const newlyOrdered = new Array(target.length)
+  result.forEach((movedToIndex, originalIndex) => {
+    newlyOrdered[movedToIndex] = target[originalIndex]
+  })
+  newlyOrdered.forEach((value, index) => target[index] = value)
+  return result
+}
+
+function getRotateToSwapPermutation(numItems: number, indexFrom: number, indexTo: number): number[] {
+  if ( (indexFrom >= numItems) || (indexTo >= numItems) ) {
+    throw Error(`getRotateToSwapPermutation() cannot rotate ${indexFrom} to ${indexTo} because there are only ${numItems} items`)
+  }
+  let indexes = getRange(0, numItems)
+  // To get the permutation, we have to permute the indexes
+  // the reversed way. Check the tests to understand this.
+  doRotateToSwapItems(indexes, indexTo, indexFrom)
+  return indexes
+}
+
+export function doRotateToSwapItems<T>(target: T[], posFrom: number, posTo: number) {
+  const carry: T = target[posFrom]
+  if (posFrom < posTo) {
+    for (let index = posFrom + 1; index <= posTo; ++index) {
+      target[index - 1] = target[index]
+    }  
+  } else if (posFrom > posTo) {
+    for(let index = posFrom - 1; index >= posTo; --index) {
+      target[index + 1] = target[index]
+    }  
+  }
+  target[posTo] = carry
+}
