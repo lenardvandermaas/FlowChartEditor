@@ -1,16 +1,14 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
-import { CommonModule, NgFor } from '@angular/common'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { CdkDragDrop } from '@angular/cdk/drag-drop'
 import { NodeSequenceEditor, NodeSequenceEditorCell } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
 import { NodeCaptionChoice, getCaption } from '../../model/graph';
 
 @Component({
   selector: 'app-sequence-editor',
-  standalone: true,
-  imports: [ DragDropModule, CommonModule, NgFor ],
   templateUrl: './sequence-editor.component.html',
-  styleUrl: './sequence-editor.component.scss'
+  styleUrl: './sequence-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SequenceEditorComponent {
   view: View = this.getEmptyView()

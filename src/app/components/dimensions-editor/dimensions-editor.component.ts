@@ -1,6 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 import { NodeSpacingDimensions } from '../../graphics/node-layout';
 
 export interface Dimensions extends NodeSpacingDimensions {
@@ -10,10 +8,9 @@ export interface Dimensions extends NodeSpacingDimensions {
 
 @Component({
   selector: 'app-dimensions-editor',
-  standalone: true,
-  imports: [FormsModule, NgClass],
   templateUrl: './dimensions-editor.component.html',
-  styleUrl: './dimensions-editor.component.scss'
+  styleUrl: './dimensions-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DimensionsEditorComponent {
   editDimensions: Dimensions = getFactoryDimensions()

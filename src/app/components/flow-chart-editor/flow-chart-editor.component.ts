@@ -1,33 +1,41 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { SequenceEditorComponent } from '../sequence-editor/sequence-editor.component';
-import { Drawing, FrankFlowchartComponent, Line, Rectangle, getEmptyDrawing } from '../frank-flowchart/frank-flowchart.component';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Drawing, Line, Rectangle, getEmptyDrawing } from '../frank-flowchart/frank-flowchart.component';
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
-import { GraphBase, Graph, GraphConnectionsDecorator, ConcreteNode, Edge, getEdgeKey, NodeCaptionChoice, getCaption } from '../../model/graph';
-import { calculateLayerNumbers, CreationReason, NodeForEditor, NodeSequenceEditorBuilder, OriginalNode } from '../../model/horizontalGrouping';
+import { GraphBase, GraphConnectionsDecorator, NodeCaptionChoice, getCaption } from '../../model/graph';
+import { calculateLayerNumbers, CreationReason, LayerNumberAlgorithm, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
-import { NodeLayoutBuilder, NodeSpacingDimensions } from '../../graphics/node-layout';
+import { NodeLayoutBuilder } from '../../graphics/node-layout';
 import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
-import { Dimensions, DimensionsEditorComponent, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
+import { Dimensions, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
 
 export interface NodeSequenceEditorOrError {
   model: NodeSequenceEditor | null
   error: string | null
 }
 
+export interface GraphConnectionsDecoratorOrError {
+  graph: GraphConnectionsDecorator | null
+  error: string | null
+}
+
 @Component({
   selector: 'app-flow-chart-editor',
-  standalone: true,
-  imports: [ SequenceEditorComponent, FrankFlowchartComponent, DimensionsEditorComponent, FormsModule ],
   templateUrl: './flow-chart-editor.component.html',
-  styleUrl: './flow-chart-editor.component.scss'
+  styleUrl: './flow-chart-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
+  graph: GraphConnectionsDecorator | null = null;
   layoutModel: NodeSequenceEditor | null = null
   showNodeTextInDrawing: boolean = true
   choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
+  layerNumberAlgorithm: LayerNumberAlgorithm = LayerNumberAlgorithm.LONGEST_PATH;
+  layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
+    {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'},
+    {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'}
+  ];
 
   updateShowNodeTextInDrawing(): NodeCaptionChoice {
     if (this.showNodeTextInDrawing) {
@@ -49,7 +57,17 @@ export class FlowChartEditorComponent {
   numCrossingLines: number = 0
 
   loadMermaid() {
-    const modelOrError: NodeSequenceEditorOrError = FlowChartEditorComponent.mermaid2model(this.mermaidText)
+    const graphOrError: GraphConnectionsDecoratorOrError = FlowChartEditorComponent.mermaid2graph(this.mermaidText)
+    if (graphOrError.error !== null) {
+      alert(graphOrError.error)
+      return
+    }
+    this.graph = graphOrError.graph
+    this.loadGraph();
+  }
+
+  loadGraph() {
+    const modelOrError: NodeSequenceEditorOrError = this.graph2Model();
     if (modelOrError.error !== null) {
       alert(modelOrError.error)
       return
@@ -58,16 +76,22 @@ export class FlowChartEditorComponent {
     this.updateDrawing()
   }
 
-  static mermaid2model(text: string): NodeSequenceEditorOrError {
+  static mermaid2graph(text: string): GraphConnectionsDecoratorOrError {
     let b: GraphBase
     try {
       b = getGraphFromMermaid(text)
     } catch(e) {
-      return {model: null, error: 'Invalid mermaid text:' + (e as Error).message}
+      return {graph: null, error: 'Invalid mermaid text:' + (e as Error).message}
     }
-    const g: Graph = new GraphConnectionsDecorator(b)
-    const layerMap: Map<string, number> = calculateLayerNumbers(g)
-    const builder: NodeSequenceEditorBuilder = new NodeSequenceEditorBuilder(layerMap, g)
+    return {graph: new GraphConnectionsDecorator(b), error: null}
+  }
+
+  graph2Model(): NodeSequenceEditorOrError {
+    if (!this.graph) {
+      return {model: null, error: 'mermaid was not yet converted to graph when trying to load graph'}
+    }
+    const layerMap: Map<string, number> = calculateLayerNumbers(this.graph, this.layerNumberAlgorithm)
+    const builder: NodeSequenceEditorBuilder = new NodeSequenceEditorBuilder(layerMap, this.graph)
     if (builder.orderedOmittedNodes.length > 0) {
       return {model: null, error: 'Could not assign a layer to the following nodes: ' + builder.orderedOmittedNodes.map(n => n.getId()).join(', ')}
     }

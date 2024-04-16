@@ -11,6 +11,10 @@ version.
       <textarea [(ngModel)]="mermaidText"></textarea>
     </td>
     <td>
+      <label for="algorithmDropdown">algorithm</label>
+      <select id="algorithmDropdown" [(ngModel)]="layerNumberAlgorithm">
+        <option *ngFor="let alg of layerNumberAlgorithms" value="{{alg.key}}">{{alg.value}}</option>
+      </select>
       <button (click)="loadMermaid()">Load</button>
     </td>
     <td>
