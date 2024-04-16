@@ -1,13 +1,15 @@
-import { ConcreteEdge, ConcreteGraphBase, ConcreteNode, Edge, GraphBase, Node, OptionalNode, getEdgeKey } from "../model/graph";
+import { ConcreteEdge, ConcreteGraphBase, ConcreteNode, Edge, GraphBase, Node, NodeOrEdge, OptionalNode, getEdgeKey } from "../model/graph";
 import { CreationReason, EdgeForEditor, NodeForEditor, OriginalNode } from "../model/horizontalGrouping";
 import { NodeSequenceEditor } from "../model/nodeSequenceEditor";
 import { Interval } from "../util/interval";
+import { Edge2LineCalculation } from "./edge-connection-points";
 import { Line, LineRelation, Point, relateLines } from "./graphics";
 import { NodeLayout, NodeSpacingDimensions, Position } from "./node-layout";
 
 export interface Dimensions extends NodeSpacingDimensions {
   nodeBoxWidth: number
   nodeBoxHeight: number
+  boxConnectorAreaPerc: number
 }
   
 export class PlacedNode implements Node {
@@ -16,7 +18,7 @@ export class PlacedNode implements Node {
   readonly text: string
   readonly originalStyle: string | null
   readonly layerNumber: number
-  private horizontalBox: Interval
+  readonly horizontalBox: Interval
   private verticalBox: Interval
 
   constructor(p: Position, d: Dimensions) {
@@ -93,20 +95,19 @@ export class PlacedEdge implements Edge {
   readonly minLayerNumber: number
   readonly maxLayerNumber: number
 
-  constructor (private fromNode: PlacedNode, private toNode: PlacedNode, rawEdge: Edge) {
+  constructor (private fromNode: PlacedNode, private toNode: PlacedNode, rawEdge: Edge, line: Line) {
     this.key = getEdgeKey(fromNode, toNode)
     const edge = rawEdge as EdgeForEditor
     this.creationReason = edge.creationReason
     const originalEdge = edge.original as ConcreteEdge
     this.optionalOriginalText = originalEdge.text === undefined ? null : originalEdge.text
+    this.line = line
     if (fromNode.layerNumber < toNode.layerNumber) {
       this.minLayerNumber = fromNode.layerNumber
       this.maxLayerNumber = toNode.layerNumber
-      this.line = new Line(fromNode.centerBottom, toNode.centerTop)
     } else {
       this.minLayerNumber = toNode.layerNumber
       this.maxLayerNumber = fromNode.layerNumber
-      this.line = new Line(fromNode.centerTop, toNode.centerBottom)
     }
   }
 
@@ -117,29 +118,30 @@ export class PlacedEdge implements Edge {
   getTo(): PlacedNode {
     return this.toNode
   }
+
+  getKey(): string {
+    return this.key
+  }
 }
 
 export class Layout implements GraphBase {
   readonly width: number
   readonly height: number
-
   private delegate: ConcreteGraphBase
 
   constructor(layout: NodeLayout, model: NodeSequenceEditor, d: Dimensions) {
     this.width = layout.width
     this.height = layout.height
+    const calc = new Edge2LineCalculation(layout, model, d)
     this.delegate = new ConcreteGraphBase()
-    layout.positions.forEach(p => this.delegate.addExistingNode(
-      new PlacedNode(p, d)
-    ))
-    model.getEdges()
-      .filter(edge => layout.positionMap.has(edge.getFrom().getId()))
-      .filter(edge => layout.positionMap.has(edge.getTo().getId()))
-      .forEach(edge => this.delegate.addEdge(new PlacedEdge(
+    calc.getPlacedNodes().forEach(n => this.delegate.addExistingNode(n))
+    calc.getOriginalEdges().forEach(edge => {
+      this.delegate.addEdge(new PlacedEdge(
         this.delegate.getNodeById(edge.getFrom().getId())! as PlacedNode,
         this.delegate.getNodeById(edge.getTo().getId())! as PlacedNode,
-        edge
-      )))
+        edge,
+        calc.edge2line(edge)))
+    })
   }
 
   getNodes(): readonly Node[] {
@@ -156,6 +158,10 @@ export class Layout implements GraphBase {
 
   getEdgeByKey(key: string): Edge | undefined {
     return this.delegate.getEdgeByKey(key)
+  }
+
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    return this.delegate.parseNodeOrEdgeId(id)
   }
 
   getNumCrossingLines(): number {

@@ -7,7 +7,8 @@
       [attr.width]="calcZoom(rectangle.width)"
       [attr.height]="calcZoom(rectangle.height)"
       id="rectangle.id"
-      [ngClass]="getRectangleClass(rectangle)">
+      [ngClass]="getRectangleClass(rectangle)"
+      (click)="handleShapeClicked(rectangle.id)">
     </rect>
     <text
       [attr.x]="calcZoom(rectangle.centerX)"
@@ -19,5 +20,6 @@
   <polyline *ngFor="let line of drawing.lines"
     attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}" 
     id="line.id"
-    [ngClass]="getLineClass(line)"/>
+    [ngClass]="getLineClass(line)"
+    (click)="handleShapeClicked(line.id)"/>
 </svg>

@@ -3,14 +3,14 @@
   <table *ngIf="view.header.length > 0" cdkDropList (cdkDropListDropped)="drop($event)">
     <thead>
       <th></th>
-      <th *ngFor="let headerCell of view.header" [ngClass]="getClass(headerCell)">
+      <th *ngFor="let headerCell of view.header" [ngClass]="getClass(headerCell)" (click)="selectNode(headerCell.position)">
         {{ headerCell.nodeId === null ? "\<empty\>" : headerCell.nodeId}}
       </th>
     </thead>
     <tr *ngFor="let row of view.body" cdkDrag>
       <th [ngClass]="getClass(row.header)">
         <div class="row-header-omitted" *ngIf="row.header.nodeId === null">
-          <select (change)="select($event, row.header.position)" cdkDragHandle>
+          <select (change)="reintroducePulldownSelect($event, row.header.position)" cdkDragHandle>
             <option></option>
             <option *ngFor="let option of row.header.fillOptions">{{ option }}</option>
           </select>
@@ -20,14 +20,11 @@
           <button (click)="omit(row.header.position)">X</button>
         </div>
       </th>
-      <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)">
+      <td *ngFor="let cell of row.cells" [ngClass]="getClass(cell)" (click)="selectCell(cell.fromPosition, cell.toPosition)">
         <div
-          *ngIf=
-            "cell.fromAndToHaveNode && (cell.fromPosition !== cell.toPosition)"
-          [ngClass]="{
-            'edgeMark': true,
-            'hasEdge': cell.hasEdge ? true : undefined
-          }"></div>
+          [ngClass]="getCellClass(cell)"
+          (click)="selectCell(cell.fromPosition, cell.toPosition)">
+        </div>
       </td>
     </tr>
   </table>

@@ -3,10 +3,11 @@ import { Drawing, Line, Rectangle, getEmptyDrawing } from '../frank-flowchart/fr
 import { getGraphFromMermaid } from '../../parsing/mermaid-parser';
 import { GraphBase, GraphConnectionsDecorator, NodeCaptionChoice, getCaption } from '../../model/graph';
 import { calculateLayerNumbers, CreationReason, LayerNumberAlgorithm, NodeSequenceEditorBuilder } from '../../model/horizontalGrouping';
-import { NodeSequenceEditor } from '../../model/nodeSequenceEditor';
+import { NodeOrEdgeSelection, NodeSequenceEditor } from '../../model/nodeSequenceEditor';
 import { NodeLayoutBuilder } from '../../graphics/node-layout';
-import { Layout, PlacedEdge, PlacedNode } from '../../graphics/edge-layout';
-import { Dimensions, getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
+import { Layout, PlacedEdge, PlacedNode, Dimensions } from '../../graphics/edge-layout';
+import { getFactoryDimensions } from '../dimensions-editor/dimensions-editor.component';
+import { Subject } from 'rxjs';
 
 export interface NodeSequenceEditorOrError {
   model: NodeSequenceEditor | null
@@ -29,6 +30,7 @@ export class FlowChartEditorComponent {
   zoomInput: number = 100
   graph: GraphConnectionsDecorator | null = null;
   layoutModel: NodeSequenceEditor | null = null
+  selectionInModel: NodeOrEdgeSelection = new NodeOrEdgeSelection
   showNodeTextInDrawing: boolean = true
   choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
   layerNumberAlgorithm: LayerNumberAlgorithm = LayerNumberAlgorithm.LONGEST_PATH;
@@ -45,6 +47,9 @@ export class FlowChartEditorComponent {
   }
 
   newChoiceShowNodeText() {
+    if (this.layoutModel === null) {
+      return
+    }
     this.showNodeTextInDrawing = ! this.showNodeTextInDrawing
     this.choiceShowNodeTextInDrawing = this.updateShowNodeTextInDrawing()
     if (this.layoutModel !== null) {
@@ -55,6 +60,13 @@ export class FlowChartEditorComponent {
   dimensions = getFactoryDimensions()
   drawing: Drawing = getEmptyDrawing()
   numCrossingLines: number = 0
+
+  // In the drawing
+  itemClickedSubject: Subject<string> = new Subject<string>
+
+  onItemClicked(itemClicked: string) {
+    this.itemClickedSubject?.next(itemClicked)
+  }
 
   loadMermaid() {
     const graphOrError: GraphConnectionsDecoratorOrError = FlowChartEditorComponent.mermaid2graph(this.mermaidText)
@@ -99,24 +111,31 @@ export class FlowChartEditorComponent {
   }
 
   onSequenceEditorChanged() {
+    if (this.layoutModel === null) {
+      return
+    }
     this.updateDrawing()
   }
 
   updateDrawing() {
     const layout = FlowChartEditorComponent.model2layout(this.layoutModel!, this.dimensions)
     this.numCrossingLines = layout.getNumCrossingLines()
+    // TODO: Properly fill selected property
     const rectangles: Rectangle[] = layout.getNodes()
       .map(n => n as PlacedNode)
       // No box around intermediate node
       .filter(n => n.creationReason === CreationReason.ORIGINAL)
       .map(n => { return {
         id: n.getId(), x: n.left, y: n.top, width: n.width, height: n.height, centerX: n.centerX, centerY: n.centerY,
-        text: getCaption(n, this.choiceShowNodeTextInDrawing)}})
+        text: getCaption(n, this.choiceShowNodeTextInDrawing),
+        selected: this.selectionInModel.isNodeHighlightedInDrawing(n.getId(), this.layoutModel!)
+      }})
     const lines: Line[] = layout.getEdges()
       .map(edge => edge as PlacedEdge)
       .map(edge => { return {
         id: edge.key, x1: edge.line.startPoint.x, y1: edge.line.startPoint.y,
-        x2: edge.line.endPoint.x, y2: edge.line.endPoint.y
+        x2: edge.line.endPoint.x, y2: edge.line.endPoint.y,
+        selected: this.selectionInModel.isEdgeHighlightedInDrawing(edge.getKey(), this.layoutModel!)
       }})
     this.drawing = {width: layout.width, height: layout.height, rectangles, lines}
   }

@@ -1,10 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
-import { NodeSpacingDimensions } from '../../graphics/node-layout';
-
-export interface Dimensions extends NodeSpacingDimensions {
-  nodeBoxWidth: number
-  nodeBoxHeight: number
-}
+import { Dimensions } from '../../graphics/edge-layout';
 
 @Component({
   selector: 'app-dimensions-editor',
@@ -45,6 +40,7 @@ export function getFactoryDimensions(): Dimensions {
     intermediateWidth: 60,
     nodeWidth: 120,
     omittedPlaceholderWidth: 90,
-    nodeBoxWidth: 110
+    nodeBoxWidth: 110,
+    boxConnectorAreaPerc: 50
   }
 }

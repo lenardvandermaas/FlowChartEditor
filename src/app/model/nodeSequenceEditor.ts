@@ -5,8 +5,8 @@
 // Managing how to choose the sequence of nodes within a layer is also
 // supported here.
 
-import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph } from './graph'
-import { getRange } from '../util/util'
+import { Node, Edge, getEdgeKey, OptionalNode, OptionalEdge, Graph, NodeOrEdge } from './graph'
+import { getRange, rotateToSwapItems } from '../util/util'
 
 export enum UpdateResponse {
   ACCEPTED = "accepted",
@@ -18,6 +18,8 @@ type OptionalString = string | null
 export interface NodeSequenceEditor {
   getNodeById(id: string): Node | undefined
   getEdges(): readonly Edge[]
+  getEdgeByKey(key: string): Edge | undefined
+  parseNodeOrEdgeId(id: string): NodeOrEdge
   getOrderedEdgesStartingFrom(startId: string): readonly Edge[]
   getOrderedEdgesLeadingTo(endId: string): readonly Edge[]
   getSuccessors(nodeId: string): readonly Node[]
@@ -28,12 +30,14 @@ export interface NodeSequenceEditor {
   getPositionsInLayer(layerNumber: number): number[]
   getSequence(): readonly OptionalNode[]
   getSequenceInLayer(layerNumber: number): readonly OptionalNode[]
-  rotateToSwap(posFrom: number, posTo: number): UpdateResponse
+  // Returns array with old index as key, new index as value
+  rotateToSwap(posFrom: number, posTo: number): number[]
   omitNodeFrom(position: number): UpdateResponse
   reintroduceNode(position: number, node: Node): UpdateResponse
   getOrderedOmittedNodes(): readonly Node[]
   getOrderedOmittedNodesInLayer(layerNumber: number): readonly Node[]
   getCell(positionFrom: number, positionTo: number): NodeSequenceEditorCell
+  optionalPositionOfNode(nodeId: string): number | null
 }
 
 export interface NodeSequenceEditorCell {
@@ -99,6 +103,14 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     return this.graph.getEdges()
   }
 
+  getEdgeByKey(key: string): Edge | undefined {
+    return this.graph.getEdgeByKey(key)
+  }
+
+  parseNodeOrEdgeId(id: string): NodeOrEdge {
+    return this.graph.parseNodeOrEdgeId(id)
+  }
+
   getNumLayers(): number {
     return this.layerStartPositions.length
   }
@@ -162,34 +174,19 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
     return this.getPositionsInLayer(layerNumber).map(index => this.getSequence()[index])
   }
 
-  rotateToSwap(posFrom: number, posTo: number): UpdateResponse {
+  rotateToSwap(posFrom: number, posTo: number): number[] {
     this.checkPosition(posFrom)
     this.checkPosition(posTo)
     const layerFrom = this.getLayerOfPosition(posFrom)
     const layerTo = this.getLayerOfPosition(posTo)
-    if (posFrom === posTo) {
-      // Nothing to do
-      return UpdateResponse.ACCEPTED
-    }
     if (layerFrom !== layerTo) {
-      return UpdateResponse.REJECTED
+      // The permutation that does nothing
+      return getRange(0, this.sequence.length)
     }
-    const carry: OptionalString = this.sequence[posFrom]
-    this.rotate(posFrom, posTo)
-    this.sequence[posTo] = carry
-    return UpdateResponse.ACCEPTED
-  }
-
-  private rotate(posFrom: number, posTo: number) {
-    if (posFrom < posTo) {
-      for (let index = posFrom + 1; index <= posTo; ++index) {
-        this.sequence[index - 1] = this.sequence[index]
-      }  
-    } else if (posFrom > posTo) {
-      for(let index = posFrom - 1; index >= posTo; --index) {
-        this.sequence[index + 1] = this.sequence[index]
-      }  
-    }
+    let newSequence: OptionalString[] = [ ... this.sequence]
+    const permutation = rotateToSwapItems(newSequence, posFrom, posTo)
+    this.sequence = newSequence
+    return permutation
   }
 
   omitNodeFrom(position: number): UpdateResponse {
@@ -267,6 +264,17 @@ export class ConcreteNodeSequenceEditor implements NodeSequenceEditor {
       }
     }
     return new ConcreteNodeSequenceCell(positionFrom, positionTo, layerFrom, layerTo, optionalEdge)
+  }
+
+  optionalPositionOfNode(nodeId: string): number | null {
+    const indexOfResult: number = this.getSequence()
+      .map(n => n === null ? null : n.getId())
+      .indexOf(nodeId)
+    if (indexOfResult >= 0) {
+      return indexOfResult
+    } else {
+      return null
+    }
   }
 
   private checkPosition(position: number) {
@@ -354,4 +362,239 @@ function calculateLayerStartPositions(sequence: readonly string[], nodeIdToLayer
     }
   }
   return layerStartPositions
+}
+
+
+// If a node has been selected, all its incoming and outgoing
+// edges should also be highlighted.
+//
+// If an edge has been selected, the nodes it connects
+// should also be highlighted.
+
+interface NodeOrEdgeSelectionState {
+  followPermutation(permutation: number[], model: NodeSequenceEditor): void
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean
+  isSelectPositionUndoes(index: number): boolean
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean
+}
+
+export class NodeOrEdgeSelection {
+  private state: NodeOrEdgeSelectionState = new NodeOrEdgeSelectionStateDefault()
+
+  clear() {
+    this.state = new NodeOrEdgeSelectionStateDefault()
+  }
+
+  selectPosition(index: number, model: NodeSequenceEditor) {
+    if (this.state.isSelectPositionUndoes(index)) {
+      this.state = new NodeOrEdgeSelectionStateDefault()
+    } else {
+      this.state = new NodeOrEdgeSelectionStatePosition(index)
+    }
+  }
+
+  selectCell(indexFrom: number, indexTo: number, model: NodeSequenceEditor) {
+    if (this.state.isSelectCellUndoes(indexFrom, indexTo)) {
+      this.state = new NodeOrEdgeSelectionStateDefault()
+    } else {
+      this.state = new NodeOrEdgeSelectionStateCell(indexFrom, indexTo)
+    }
+  }
+
+  selectNodeId(nodeId: string, model: NodeSequenceEditor) {
+    const position: number | null = model.optionalPositionOfNode(nodeId)
+    if (position !== null) {
+      this.selectPosition(position, model)
+    }
+  }
+
+  selectEdgeKey(key: string, model: NodeSequenceEditor) {
+    const edge: Edge | undefined = model.getEdgeByKey(key)
+    if (edge === undefined) {
+      return
+    }
+    const indexFrom = model.optionalPositionOfNode(edge.getFrom().getId())
+    const indexTo = model.optionalPositionOfNode(edge.getTo().getId())
+    if ( (indexFrom !== null) && (indexTo !== null)) {
+      this.selectCell(indexFrom, indexTo, model)
+    }
+  }
+
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    if (permutation.length != model.getSequence().length) {
+      throw new Error(`Invalid permutation ${permutation} because model has ${model.getSequence().length} positions`)
+    }
+    this.state.followPermutation(permutation, model)
+  }
+
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return this.state.isFromPositionHighlightedInEditor(index, model)
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return this.state.isToPositionHighlightedInEditor(index, model)
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return this.state.isCellHighlightedInEditor(indexFrom, indexTo, model)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return this.state.isNodeHighlightedInDrawing(id, model)
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    return this.state.isEdgeHighlightedInDrawing(key, model)
+  }
+}
+
+class NodeOrEdgeSelectionStateDefault implements NodeOrEdgeSelectionState {
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+  }
+
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    return false
+  }
+
+  isSelectPositionUndoes(index: number): boolean {
+    return false
+  }
+
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return false
+  }
+}
+
+class NodeOrEdgeSelectionStatePosition implements NodeOrEdgeSelectionState {
+  constructor(
+    private position: number,
+  ) {}
+
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    this.position = permutation[this.position]
+  }
+
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.position
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.position
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return (indexFrom === this.position) || (indexTo === this.position)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    const optionalSelectedNode = model.getSequence()[this.position]
+    return (optionalSelectedNode !== null) && (id === optionalSelectedNode.getId())
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    const optionalSelectedNode = model.getSequence()[this.position]
+    if (optionalSelectedNode === null) {
+      return false
+    }
+    const id = optionalSelectedNode.getId()
+    const edgeKeysOnSelectedNode: string[] =
+      [model.getOrderedEdgesStartingFrom(id), model.getOrderedEdgesLeadingTo(id)]
+      .flat()
+      .map(edge => edge.getKey())
+    if (edgeKeysOnSelectedNode.indexOf(key) >= 0) {
+      return true
+    }
+    return false
+  }
+
+  isSelectPositionUndoes(index: number): boolean {
+    return index === this.position
+  }
+
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return false
+  }
+}
+
+class NodeOrEdgeSelectionStateCell implements NodeOrEdgeSelectionState {
+  constructor(
+    private indexFrom: number,
+    private indexTo: number
+  ) {}
+
+  private getModelData(model: NodeSequenceEditor):
+      {optionalFromNode: OptionalNode, optionalToNode: OptionalNode, optionalSelectedEdge: OptionalEdge}
+  {
+    const optionalFromNode = model.getSequence()[this.indexFrom]
+    const optionalToNode = model.getSequence()[this.indexTo]
+    let optionalSelectedEdge: OptionalEdge
+    if ( (optionalFromNode !== null) && (optionalToNode !== null)) {
+      const key: string = getEdgeKey(optionalFromNode, optionalToNode)
+      const raw: Edge | undefined = model.getEdgeByKey(key)
+      optionalSelectedEdge = raw === undefined ? null : raw
+    } else {
+      optionalSelectedEdge = null
+    }
+    return {optionalFromNode, optionalToNode, optionalSelectedEdge}
+  }
+
+  followPermutation(permutation: number[], model: NodeSequenceEditor) {
+    this.indexFrom = permutation[this.indexFrom]
+    this.indexTo = permutation[this.indexTo]
+  }
+
+  isFromPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.indexFrom
+  }
+
+  isToPositionHighlightedInEditor(index: number, model: NodeSequenceEditor): boolean {
+    return index === this.indexTo
+  }
+
+  isCellHighlightedInEditor(indexFrom: number, indexTo: number, model: NodeSequenceEditor): boolean {
+    return (indexFrom === this.indexFrom) && (indexTo === this.indexTo)
+  }
+
+  isNodeHighlightedInDrawing(id: string, model: NodeSequenceEditor): boolean {
+    const modelData = this.getModelData(model)
+    return this.isIdMatchesOptionalNode(id, modelData.optionalFromNode) || this.isIdMatchesOptionalNode(id, modelData.optionalToNode)
+  }
+
+  private isIdMatchesOptionalNode(id: string, n: OptionalNode): boolean {
+    return (n !== null) && (id === n.getId())
+  }
+
+  isEdgeHighlightedInDrawing(key: string, model: NodeSequenceEditor): boolean {
+    const modelData = this.getModelData(model)
+    return (modelData.optionalSelectedEdge !== null)
+      && (key === modelData.optionalSelectedEdge.getKey())
+  }
+
+  isSelectPositionUndoes(index: number): boolean {
+    return false
+  }
+
+  isSelectCellUndoes(indexFrom: number, indexTo: number): boolean {
+    return (indexFrom === this.indexFrom) && (indexTo === this.indexTo)
+  }
 }

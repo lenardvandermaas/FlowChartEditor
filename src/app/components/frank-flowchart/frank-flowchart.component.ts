@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-frank-flowchart',
@@ -9,33 +9,30 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 export class FrankFlowchartComponent {
   @Input() zoom: number = 100
   @Input() drawing: Drawing = getEmptyDrawing()
+  @Output() onShapeClicked: EventEmitter<string> = new EventEmitter()
 
   calcZoom(coord: number): number {
     return coord * this.zoom / 100
   }
 
-  // TODO: Remove test data and make this an input
-  /*
-  drawing: Drawing | null = {
-    width: 200,
-    height: 300,
-    rectangles: [
-      {id: "first", x: 50, y: 80, width: 100, height: 40, centerX: 100, centerY: 100, text: "My text"}
-    ],
-    lines: [
-      {id: "line1", x1: 100, y1: 150, x2: 100, y2: 250}
-    ]
+  handleShapeClicked(id: string) {
+    this.onShapeClicked.emit(id)
   }
-  */
 
   getRectangleClass(rectangle: Rectangle): string[] {
-    // TODO: Implement
-    return ["rectangle"]
+    const result = ["rectangle"]
+    if (rectangle.selected) {
+      result.push("selected")
+    }
+    return result
   }
 
   getLineClass(line: Line): string[] {
-    // TODO: Implement
-    return ["line"]
+    const result = ["line"]
+    if (line.selected) {
+      result.push("selected")
+    }
+    return result
   }
 }
 
@@ -55,6 +52,7 @@ export interface Rectangle {
   centerX: number
   centerY: number
   text: string
+  selected: boolean
 }
 
 export interface Line {
@@ -63,6 +61,7 @@ export interface Line {
   y1: number
   x2: number
   y2: number
+  selected: boolean
 }
 
 export function getEmptyDrawing(): Drawing {
