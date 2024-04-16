@@ -56,4 +56,8 @@ const dimensions: Dimensions = {
   nodeWidth: 120,
   omittedPlaceholderWidth: 90,
   nodeBoxWidth: 110,
+  // Do not include spreading edge connection points here.
+  // It is complicated enough to understand the
+  // calculation without.
+  boxConnectorAreaPerc: 0
 }

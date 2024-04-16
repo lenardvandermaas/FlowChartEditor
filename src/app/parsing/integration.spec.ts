@@ -1,10 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-
 import { getGraphFromMermaid } from './mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph'
 import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason } from '../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../model/nodeSequenceEditor';
-import { Dimensions, FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
+import { FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
+import { Dimensions } from '../graphics/edge-layout';
 
 describe('Integration', () => {
   it('Read Mermaid text and create NodeSequenceEditor', () => {
@@ -97,5 +96,8 @@ function getTestDimensions(): Dimensions {
     nodeWidth: 120,
     omittedPlaceholderWidth: 90,
     nodeBoxWidth: 110,
+    // Do not test spreading the edge connection points.
+    // Otherwise the test is incomprehensible.
+    boxConnectorAreaPerc: 0
   }
 }

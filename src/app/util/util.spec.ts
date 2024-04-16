@@ -1,4 +1,4 @@
-import { getRange, roundedMedian, sortedUniqNumbers } from './util'
+import { doRotateToSwapItems, getRange, rotateToSwapItems, roundedMedian, sortedUniqNumbers } from './util'
 
 describe('Util test', () => {
   it('Get range', () => {
@@ -57,5 +57,61 @@ describe('Util test', () => {
     expect(input).toEqual([3, 4, 3])
     expect(sortedUniqNumbers([4, 3, 3])).toEqual([3, 4])
     expect(sortedUniqNumbers([3, 3, 4])).toEqual([3, 4])
+  })
+
+  it('rotateToSwap', () => {
+    const target = ['A', 'B', 'C']
+    let simplySwapped = [... target]
+    doRotateToSwapItems(simplySwapped, 0, 2)
+    expect(simplySwapped).toEqual(['B', 'C', 'A'])
+    let swappedByPermutation: string[] = [ ... target]
+    const permutation: number[] = rotateToSwapItems(swappedByPermutation, 0, 2)
+    expect(swappedByPermutation).toEqual(['B', 'C', 'A'])
+    expect(permutation[0]).toEqual(2)
+    expect(permutation[1]).toEqual(0)
+    expect(permutation[2]).toEqual(1)
+  })
+
+  it('rotateToSwap the other direction', () => {
+    const target = ['A', 'B', 'C']
+    let simplySwapped = [... target]
+    doRotateToSwapItems(simplySwapped, 2, 0)
+    expect(simplySwapped).toEqual(['C', 'A', 'B'])
+    let swappedByPermutation: string[] = [ ... target]
+    const permutation: number[] = rotateToSwapItems(swappedByPermutation, 2, 0)
+    expect(swappedByPermutation).toEqual(['C', 'A', 'B'])
+    expect(permutation[0]).toEqual(1)
+    expect(permutation[1]).toEqual(2)
+    expect(permutation[2]).toEqual(0)
+  })
+
+  it('rotateToSwap with non-moved items', () => {
+    const target = ['X', 'A', 'B', 'C', 'Y']
+    let simplySwapped = [... target]
+    doRotateToSwapItems(simplySwapped, 1, 3)
+    expect(simplySwapped).toEqual(['X', 'B', 'C', 'A', 'Y'])
+    let swappedByPermutation: string[] = [ ... target]
+    const permutation: number[] = rotateToSwapItems(swappedByPermutation, 1, 3)
+    expect(swappedByPermutation).toEqual(['X', 'B', 'C', 'A', 'Y'])
+    expect(permutation[0]).toEqual(0)
+    expect(permutation[1]).toEqual(3)
+    expect(permutation[2]).toEqual(1)
+    expect(permutation[3]).toEqual(2)
+    expect(permutation[4]).toEqual(4)
+  })
+
+  it('rotateToSwap the other direction with unmoved items', () => {
+    const target = ['X', 'A', 'B', 'C', 'Y']
+    let simplySwapped = [... target]
+    doRotateToSwapItems(simplySwapped, 3, 1)
+    expect(simplySwapped).toEqual(['X', 'C', 'A', 'B', 'Y'])
+    let swappedByPermutation: string[] = [ ... target]
+    const permutation: number[] = rotateToSwapItems(swappedByPermutation, 3, 1)
+    expect(swappedByPermutation).toEqual(['X', 'C', 'A', 'B', 'Y'])
+    expect(permutation[0]).toEqual(0)
+    expect(permutation[1]).toEqual(2)
+    expect(permutation[2]).toEqual(3)
+    expect(permutation[3]).toEqual(1)
+    expect(permutation[4]).toEqual(4)
   })
 })

@@ -1,5 +1,7 @@
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse } from "./nodeSequenceEditor";
-import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator  } from "./graph"
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor, UpdateResponse, NodeOrEdgeSelection } from "./nodeSequenceEditor";
+import { ConcreteNode, Node, ConcreteEdge, Edge, ConcreteGraphBase, GraphBase, GraphConnectionsDecorator, Graph  } from "./graph"
+import { NodeSequenceEditorBuilder } from "./horizontalGrouping";
+import { getRange } from "../util/util";
 
 function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   const g = new ConcreteGraphBase()
@@ -8,8 +10,8 @@ function getInstanceToCheckOrdering(): ConcreteNodeSequenceEditor {
   g.addExistingNode(newTestNode('4C'))
   g.addExistingNode(newTestNode('3D'))
   g.addExistingNode(newTestNode('2E'))
-  g.addEdge(newEdge(g.getNodeById('1A')!, g.getNodeById('4C')!))
-  g.addEdge(newEdge(g.getNodeById('5B')!, g.getNodeById('2E')!))
+  g.addEdge(createNewEdge(g.getNodeById('1A')!, g.getNodeById('4C')!))
+  g.addEdge(createNewEdge(g.getNodeById('5B')!, g.getNodeById('2E')!))
   const m = new Map<string, number>([
     ['1A', 0],
     ['5B', 0],
@@ -24,7 +26,7 @@ function newTestNode(id: string): Node {
   return new ConcreteNode(0, id, '', '')
 }
 
-function newEdge(nodeFrom: Node, nodeTo: Node): Edge {
+function createNewEdge(nodeFrom: Node, nodeTo: Node): Edge {
   return new ConcreteEdge(0, nodeFrom, nodeTo, '')
 }
 
@@ -40,8 +42,8 @@ function addEdgesToSimple(g: ConcreteGraphBase) {
   g.addExistingNode(newTestNode('C'))
   g.addExistingNode(newTestNode('D'))
   g.addExistingNode(newTestNode('E'))
-  g.addEdge(newEdge(g.getNodeById('A')!, g.getNodeById('C')!))
-  g.addEdge(newEdge(g.getNodeById('B')!, g.getNodeById('E')!))
+  g.addEdge(createNewEdge(g.getNodeById('A')!, g.getNodeById('C')!))
+  g.addEdge(createNewEdge(g.getNodeById('B')!, g.getNodeById('E')!))
 }
 
 function simpleNodeToLayerMap(): Map<string, number> {
@@ -140,7 +142,10 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node upward, rotating the nodes in between', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 2)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    instance.rotateToSwap(0, 2)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['B', 'E', 'A'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
     expect(instance.getSequence().map(n => n!.getId())).toEqual(['B', 'E', 'A', 'C', 'D'])
@@ -150,7 +155,10 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node downward, rotating the nodes in between', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(2, 0)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    instance.rotateToSwap(2, 0)
     expect(instance.getSequenceInLayer(0).map(n => n!.getId())).toEqual(['E', 'A', 'B'])
     expect(instance.getSequenceInLayer(1).map(n => n!.getId())).toEqual(['C', 'D'])
     expect(instance.getSequence().map(n => n!.getId())).toEqual(['E', 'A', 'B', 'C', 'D'])
@@ -160,7 +168,11 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node up to swap with adjacent', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(3, 4)).toBe(UpdateResponse.ACCEPTED)
+    // No need to test the permutation here so thoroughly because
+    // the swapping is done based on the permutation. With a wrong
+    // permutation, the swapping result would be wrong.
+    expect(instance.rotateToSwap(3, 4)).toEqual([0, 1, 2, 4, 3])
+    expect(instance.getSequence().map(node => node?.getId())).toEqual(['A', 'B', 'E', 'D', 'C'])
     checkAfterSwapping(instance)
   })
 
@@ -174,7 +186,7 @@ describe('NodeSequenceEditor', () => {
 
   it('Move node down to swap with adjacent', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(4, 3)).toBe(UpdateResponse.ACCEPTED)
+    instance.rotateToSwap(4, 3)
     checkAfterSwapping(instance)
   })
 
@@ -232,13 +244,14 @@ describe('NodeSequenceEditor', () => {
 
   it('Check rotateToSwap swapping same node does nothing', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 0)).toBe(UpdateResponse.ACCEPTED)
+    expect(instance.rotateToSwap(0, 0)).toEqual([0, 1, 2, 3, 4])
     checkInitialState(instance)
   })
 
   it('Check rotateToSwap swapping nodes from different layers is rejected', () => {
     const instance: ConcreteNodeSequenceEditor = getSimpleInstance()
-    expect(instance.rotateToSwap(0, 3)).toBe(UpdateResponse.REJECTED)
+    // Expect the permutation that does nothing
+    expect(instance.rotateToSwap(0, 3)).toEqual([0, 1, 2, 3, 4])
     checkInitialState(instance)
   })
 
@@ -289,4 +302,190 @@ describe('NodeSequenceEditor', () => {
     expect(instance.getOrderedOmittedNodesInLayer(0).map(n => n.getId())).toEqual(['A'])
     expect(instance.getOrderedOmittedNodesInLayer(1).map(n => n.getId())).toEqual(['C'])
   }
+
+  it('optionalPositionOfNode', () => {
+    const instance: ConcreteNodeSequenceEditor = getSimpleInstance();
+    ['A', 'B', 'E', 'C', 'D'].forEach((nodeId, expectedPosition) => {
+      expect(instance.optionalPositionOfNode(nodeId)).toEqual(expectedPosition)
+    })
+    expect(instance.optionalPositionOfNode('X')).toEqual(null)
+    instance.omitNodeFrom(0)
+    expect(instance.optionalPositionOfNode('A')).toEqual(null)
+  })
 })
+
+describe('NodeOrEdgeSelection', () => {
+  it ('Select position and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectPosition(1, m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectPosition(2, m)
+    expect(instance.isFromPositionHighlightedInEditor(2, m)).toBe(true)
+    instance.selectPosition(2, m)
+    checkNothingSelected(instance, m)
+  })
+
+  it('Select cell and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectCell(0, 1, m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectPosition(1, m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectCell(0, 1, m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectCell(0, 1, m)
+    checkNothingSelected(instance, m)
+  })
+
+  it ('Select node id and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectNodeId('N1', m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectNodeId('N2', m)
+    expect(instance.isFromPositionHighlightedInEditor(2, m)).toBe(true)
+    instance.selectNodeId('N2', m)
+    checkNothingSelected(instance, m)
+  })
+
+  it('Select edge key and undo again', () => {
+    const m = getSelectionTestModel()
+    expect(m.getSequence().map(n => n!.getId())).toEqual(['Start', 'N1', 'N2', 'End'])
+    let instance = new NodeOrEdgeSelection()
+    checkNothingSelected(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectNodeId('N1', m)
+    checkNodeN1SelectedCorrectly(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
+    checkEdgeStartN1SelectedCorrectly(instance, m)
+    instance.selectEdgeKey('Start-N1', m)
+    checkNothingSelected(instance, m)
+  })
+})
+
+function getSelectionTestModel(): NodeSequenceEditor {
+  const b = new ConcreteGraphBase()
+  newNode('Start', b)
+  newNode('N1', b)
+  newNode('N2', b)
+  newNode('End', b)
+  insertNewEdge('Start', 'N1', b)
+  insertNewEdge('Start', 'N2', b)
+  insertNewEdge('N1', 'End', b)
+  insertNewEdge('N2', 'End', b)
+  const layerMap: Map<string, number> = new Map([
+    ['Start', 0],
+    ['N1', 1],
+    ['N2', 1],
+    ['End', 2]
+  ])
+  const builder = new NodeSequenceEditorBuilder(layerMap, b)
+  return builder.build()
+}
+
+function checkNothingSelected(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N1', 'N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
+  });
+  ['Start-N1', 'Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
+  })
+  getRange(0, 4).forEach(index => {
+    expect(instance.isFromPositionHighlightedInEditor(index, m)).toBe(false)
+    expect(instance.isToPositionHighlightedInEditor(index, m)).toBe(false)
+  })
+  getRange(0, 4).forEach(indexFrom => {
+    getRange(0, 4).forEach(indexTo => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(false)
+    })
+  })
+}
+
+function checkNodeN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
+  });
+  expect(instance.isNodeHighlightedInDrawing('N1', m)).toBe(true);
+  ['Start-N1', 'N1-End'].forEach(edgeKey => {
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(true)
+  });
+  ['Start-N2', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
+  });
+  [false, true, false, false].forEach((expectedToHighlighted, indexTo) => {
+    expect(instance.isToPositionHighlightedInEditor(indexTo, m)).toBe(expectedToHighlighted)
+  });
+  [false,
+  true,
+  false,
+  false].forEach((expectedFromHighlighted, indexFrom) => {
+    expect(instance.isFromPositionHighlightedInEditor(indexFrom, m)).toBe(expectedFromHighlighted)
+  });
+  [
+    [false, true, false, false],
+    [true, true, true, true],
+    [false, true, false, false],
+    [false, true, false, false]
+  ].forEach( (row, indexFrom) => {
+    row.forEach((expectedCellHighlighted, indexTo) => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(expectedCellHighlighted)
+    })
+  })
+}
+
+function checkEdgeStartN1SelectedCorrectly(instance: NodeOrEdgeSelection, m: NodeSequenceEditor) {
+  ['Start', 'N1'].forEach(nodeId => {
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(true)
+  });
+  ['N2', 'End'].forEach(nodeId => {
+    expect(instance.isNodeHighlightedInDrawing(nodeId, m)).toBe(false)
+  });
+  expect(instance.isEdgeHighlightedInDrawing('Start-N1', m)).toBe(true);
+  ['Start-N2', 'N1-End', 'N2-End'].forEach(edgeKey => {
+    expect(instance.isEdgeHighlightedInDrawing(edgeKey, m)).toBe(false)
+  });
+  [false, true, false, false].forEach((expectedToHighlighted, indexTo) => {
+    expect(instance.isToPositionHighlightedInEditor(indexTo, m)).toBe(expectedToHighlighted)
+  });
+  [true,
+  false,
+  false,
+  false].forEach((expectedFromHighlighted, indexFrom) => {
+    expect(instance.isFromPositionHighlightedInEditor(indexFrom, m)).toBe(expectedFromHighlighted)
+  });
+  [
+    [false, true, false, false],
+    [false, false, false, false],
+    [false, false, false, false],
+    [false, false, false, false]
+  ].forEach((row, indexFrom) => {
+    row.forEach((expectedCellHighlighted, indexTo) => {
+      expect(instance.isCellHighlightedInEditor(indexFrom, indexTo, m)).toBe(expectedCellHighlighted)
+    })
+  })
+}
+
+function newNode(id: string, g: ConcreteGraphBase) {
+  g.addNode(id, '', '')
+}
+
+function insertNewEdge(fromId: string, toId: string, b: ConcreteGraphBase) {
+  const from: Node | undefined = b.getNodeById(fromId)
+  const to: Node | undefined = b.getNodeById(toId)
+  if (from === undefined) {
+    throw new Error(`Invalid test case, node with id ${fromId} does not exist`)
+  }
+  if (to === undefined) {
+    throw new Error(`Invalid test case, node with id ${toId} does not exist`)
+  }
+  b.connect(from!, to!, '')
+}
