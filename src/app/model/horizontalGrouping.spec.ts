@@ -1,5 +1,5 @@
 import { ConcreteNode, Node, ConcreteGraphBase, GraphConnectionsDecorator } from '../model/graph'
-import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, OriginalNode, IntermediateNode, CreationReason, EdgeForEditor } from './horizontalGrouping'
+import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, OriginalNode, CreationReason, EdgeForEditor, LayerNumberAlgorithm, calculateLayerNumbersFirstOccuringPath, calculateLayerNumbersLongestPath } from './horizontalGrouping'
 import { getRange } from '../util/util'
 
 function newNode(id: string): Node {
@@ -11,69 +11,174 @@ function connect(idFrom: string, idTo: string, g: ConcreteGraphBase) {
 }
 
 describe('Calculating layer numbers', () => {
-  it('Two disconnected nodes can appear on same layer', () => {
-    const g = new GraphConnectionsDecorator(getSimpleGraph())
-    const result = calculateLayerNumbers(g)
-    expect(result.size).toBe(3)
-    expect(result.get('Start')).toBe(0)
-    expect(result.get('N1')).toBe(1)
-    expect(result.get('N2')).toBe(1)
-  });
+  it('Should call the correct method based on the algorithm enum', () => {
+    const g = new GraphConnectionsDecorator(getComplexGraph())
+    const result1 = calculateLayerNumbers(g, LayerNumberAlgorithm.FIRST_OCCURING_PATH)
+    const result2 = calculateLayerNumbers(g, LayerNumberAlgorithm.LONGEST_PATH)
+    const entries1: Record<string, number> = {}
+    const entries2: Record<string, number> = {}
+    result1.forEach((value, key) => entries1[key] = value)
+    result2.forEach((value, key) => entries2[key] = value)
 
-  it('Node cannot appear on same layer as node that points to it', () => {
-    const b = getSimpleGraph()
-    b.addExistingNode(newNode('End'))
-    connect('N1', 'End', b)
-    const g = new GraphConnectionsDecorator(b)
-    const result = calculateLayerNumbers(g)
-    expect(result.size).toBe(4)
-    expect(result.get('Start')).toBe(0)
-    expect(result.get('N1')).toBe(1)
-    expect(result.get('N2')).toBe(1)
-    expect(result.get('End')).toBe(2)
+    expect(entries1).toEqual({'Start': 0, 'N1': 1, 'N2': 2, 'N3': 1, 'end': 2})
+    expect(entries2).toEqual({'Start': 0, 'N1': 1, 'N2': 2, 'N3': 3, 'end': 4})
   })
 
-  it('If multiple nodes have no predecessors, all are on layer 0', () => {
-    const b = getSimplePlusDisjointEdge()
-    const g = new GraphConnectionsDecorator(b)
-    const result = calculateLayerNumbers(g)
-    expect(result.size).toBe(5)
-    expect(result.get('Start')).toBe(0)
-    expect(result.get('X0')).toBe(0)
-    expect(result.get('N1')).toBe(1)
-    expect(result.get('N2')).toBe(1)
-    expect(result.get('X1')).toBe(1)
+  describe('Longest path algorithm', () => {
+    it('Two disconnected nodes can appear on same layer', () => {
+      const g = new GraphConnectionsDecorator(getSimpleGraph())
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.size).toBe(3)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+    });
+  
+    it('Node cannot appear on same layer as node that points to it', () => {
+      const b = getSimpleGraph()
+      b.addExistingNode(newNode('End'))
+      connect('N1', 'End', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.size).toBe(4)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+      expect(result.get('End')).toBe(2)
+    })
+  
+    it('If multiple nodes have no predecessors, all are on layer 0', () => {
+      const b = getSimplePlusDisjointEdge()
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.size).toBe(5)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('X0')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+      expect(result.get('X1')).toBe(1)
+    })
+  
+    it('A cycle is ignored because no root node is found on the cycle', () => {
+      const b = getSimplePlusDisjointEdge()
+      connect('X1', 'X0', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.size).toBe(3)
+      expect([ ... result.keys()].sort()).toEqual(['N1', 'N2', 'Start'])
+    })
+  
+    it('Edge order does not matter for order of layer assignment when there is no infinite loop (1)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N1', b)
+      connect('Start', 'N2', b)
+      connect('N1', 'N2', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(2)
+    })
+  
+    it('Edge order does not matter for order of layer assignment when there is no infinite loop (2)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N2', b)
+      connect('Start', 'N1', b)
+      connect('N1', 'N2', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(2)
+    })
+
+    it('Edge order does matter for order of layer assignment when there is an infinite loop (1)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N1', b)
+      connect('Start', 'N2', b)
+      connect('N1', 'N2', b)
+      connect('N2', 'N1', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(2)
+    })
+    it('Edge order does matter for order of layer assignment when there is an infinite loop (2)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N2', b)
+      connect('Start', 'N1', b)
+      connect('N1', 'N2', b)
+      connect('N2', 'N1', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersLongestPath(g)
+      expect(result.get('N1')).toBe(2)
+      expect(result.get('N2')).toBe(1)
+    })
   })
 
-  it('A cycle is ignored because no root node is found on the cycle', () => {
-    const b = getSimplePlusDisjointEdge()
-    connect('X1', 'X0', b)
-    const g = new GraphConnectionsDecorator(b)
-    const result = calculateLayerNumbers(g)
-    expect(result.size).toBe(3)
-    expect([ ... result.keys()].sort()).toEqual(['N1', 'N2', 'Start'])
-  })
-
-  it('Edge order controls order of layer assignment (1)', () => {
-    const b = getSimpleNodesForGraph()
-    connect('Start', 'N1', b)
-    connect('Start', 'N2', b)
-    connect('N1', 'N2', b)
-    const g = new GraphConnectionsDecorator(b)
-    const result = calculateLayerNumbers(g)
-    expect(result.get('N1')).toBe(1)
-    expect(result.get('N2')).toBe(2)
-  })
-
-  it('Edge order controls order of layer assignment (2)', () => {
-    const b = getSimpleNodesForGraph()
-    connect('Start', 'N2', b)
-    connect('Start', 'N1', b)
-    connect('N1', 'N2', b)
-    const g = new GraphConnectionsDecorator(b)
-    const result = calculateLayerNumbers(g)
-    expect(result.get('N2')).toBe(1)
-    expect(result.get('N1')).toBe(2)
+  describe('First occuring path algorithm', () => {
+    it('Two disconnected nodes can appear on same layer', () => {
+      const g = new GraphConnectionsDecorator(getSimpleGraph())
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.size).toBe(3)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+    });
+  
+    it('Node cannot appear on same layer as node that points to it', () => {
+      const b = getSimpleGraph()
+      b.addExistingNode(newNode('End'))
+      connect('N1', 'End', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.size).toBe(4)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+      expect(result.get('End')).toBe(2)
+    })
+  
+    it('If multiple nodes have no predecessors, all are on layer 0', () => {
+      const b = getSimplePlusDisjointEdge()
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.size).toBe(5)
+      expect(result.get('Start')).toBe(0)
+      expect(result.get('X0')).toBe(0)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(1)
+      expect(result.get('X1')).toBe(1)
+    })
+  
+    it('A cycle is ignored because no root node is found on the cycle', () => {
+      const b = getSimplePlusDisjointEdge()
+      connect('X1', 'X0', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.size).toBe(3)
+      expect([ ... result.keys()].sort()).toEqual(['N1', 'N2', 'Start'])
+    })
+  
+    it('Edge order controls order of layer assignment (1)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N1', b)
+      connect('Start', 'N2', b)
+      connect('N1', 'N2', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.get('N1')).toBe(1)
+      expect(result.get('N2')).toBe(2)
+    })
+  
+    it('Edge order controls order of layer assignment (2)', () => {
+      const b = getSimpleNodesForGraph()
+      connect('Start', 'N2', b)
+      connect('Start', 'N1', b)
+      connect('N1', 'N2', b)
+      const g = new GraphConnectionsDecorator(b)
+      const result = calculateLayerNumbersFirstOccuringPath(g)
+      expect(result.get('N2')).toBe(1)
+      expect(result.get('N1')).toBe(2)
+    })
   })
 
   function getSimpleNodesForGraph() {
@@ -84,10 +189,30 @@ describe('Calculating layer numbers', () => {
     return b
   }
 
+  function getNodesForComplexGraph() {
+    const b = new ConcreteGraphBase()
+    b.addExistingNode(newNode('Start'))
+    b.addExistingNode(newNode('N1'))
+    b.addExistingNode(newNode('N2'))
+    b.addExistingNode(newNode('N3'))
+    b.addExistingNode(newNode('end'))
+    return b
+  }
+
   function getSimpleGraph(): ConcreteGraphBase {
     const b = getSimpleNodesForGraph()
     connect('Start', 'N1', b)
     connect('Start', 'N2', b)
+    return b
+  }
+
+  function getComplexGraph(): ConcreteGraphBase {
+    const b = getNodesForComplexGraph()
+    connect('Start', 'N3', b)
+    connect('Start', 'N1', b)
+    connect('N1', 'N2', b)
+    connect('N2', 'N3', b)
+    connect('N3', 'end', b)
     return b
   }
 
