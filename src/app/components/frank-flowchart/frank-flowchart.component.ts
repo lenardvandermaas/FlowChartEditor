@@ -34,6 +34,9 @@ export class FrankFlowchartComponent {
     if (line.selected) {
       result.push("selected")
     }
+    if (line.isError) {
+      result.push("error")
+    }
     return result
   }
 }
@@ -64,6 +67,7 @@ export interface Line {
   x2: number
   y2: number
   selected: boolean
+  isError: boolean
 }
 
 export function getEmptyDrawing(): Drawing {

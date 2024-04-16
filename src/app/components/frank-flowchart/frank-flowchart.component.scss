@@ -17,6 +17,14 @@
   stroke: blue;
 }
 
+.line.error {
+  stroke: red
+}
+
+.line.error.selected {
+  stroke: purple
+}
+
 .rectangle:hover {
   stroke-width: 10;
 }
