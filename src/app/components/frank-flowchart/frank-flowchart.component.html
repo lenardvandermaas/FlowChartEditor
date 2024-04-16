@@ -1,5 +1,18 @@
 <svg *ngIf="drawing !== null" class="svg" xmlns="http://www.w3.org/2000/svg"
     [attr.width]="calcZoom(drawing.width)" [attr.height]="calcZoom(drawing.height)">
+  <defs>
+    <!-- A marker to be used as an arrowhead -->
+    <marker
+      id="arrow"
+      viewBox="0 0 4 4"
+      refX="4"
+      refY="2"
+      markerWidth="4"
+      markerHeight="4"
+      orient="auto-start-reverse">
+      <path d="M 0 0 L 4 2 L 0 4 z" />
+    </marker>
+  </defs>
   <g *ngFor="let rectangle of drawing.rectangles">
     <rect
       [attr.x]="calcZoom(rectangle.x)"
@@ -17,7 +30,8 @@
     </text>
   </g>
   <polyline *ngFor="let line of drawing.lines"
-    attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}" 
+    attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
+    marker-end="url(#arrow)"
     id="line.id"
     [ngClass]="getLineClass(line)"/>
 </svg>
