@@ -1,14 +1,11 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 import { Dimensions } from '../../graphics/edge-layout';
 
 @Component({
   selector: 'app-dimensions-editor',
-  standalone: true,
-  imports: [FormsModule, NgClass],
   templateUrl: './dimensions-editor.component.html',
-  styleUrl: './dimensions-editor.component.scss'
+  styleUrl: './dimensions-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DimensionsEditorComponent {
   editDimensions: Dimensions = getFactoryDimensions()

@@ -1,51 +1,55 @@
-<svg *ngIf="drawing !== null" class="svg" xmlns="http://www.w3.org/2000/svg"
-    [attr.width]="calcZoom(drawing.width)" [attr.height]="calcZoom(drawing.height)">
-  <defs>
-    <!-- A marker to be used as an arrowhead -->
-    <marker
-      id="arrow"
-      viewBox="0 0 4 4"
-      refX="4"
-      refY="2"
-      markerWidth="4"
-      markerHeight="4"
-      orient="auto-start-reverse">
-      <path d="M 0 0 L 4 2 L 0 4 z" />
-    </marker>
-  </defs>
-  <g *ngFor="let rectangle of drawing.rectangles" (click)="handleShapeClicked(rectangle.id)">
-    <rect class="rectangle"
-      [attr.x]="calcZoom(rectangle.x)"
-      [attr.y]="calcZoom(rectangle.y)"
-      [attr.width]="calcZoom(rectangle.width)"
-      [attr.height]="calcZoom(rectangle.height)"
-      id="rectangle.id"
-      rx="5">
-    </rect>
-    <text
-      [attr.x]="calcZoom(rectangle.centerX)"
-      [attr.y]="calcZoom(rectangle.centerY)"
-      text-anchor="middle" dominant-baseline="middle" class="nodeText">
-      {{rectangle.text}}
-    </text>
-    <rect class="rect-hover-padding"
-      [attr.x]="calcZoom(rectangle.x - 5)"
-      [attr.y]="calcZoom(rectangle.y - 5)"
-      [attr.width]="calcZoom(rectangle.width + 10)"
-      [attr.height]="calcZoom(rectangle.height + 10)"
-      [class.selected]="rectangle.selected"
-      rx="10">
-    </rect>
-  </g>
-  <g *ngFor="let line of drawing.lines" (click)="handleShapeClicked(line.id)">
-    <polyline class="line"
-      attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
-      [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
-      id="{{line.id}}"
-      [class.selected]="line.selected"
-      [class.error]="line.isError"/>
-    <polyline class="line-hover-padding"
-      attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
-      [class.selected]="line.selected"/>
-  </g>
-</svg>
+<div class="wrapper">
+  <div id="scale-overlay">{{scale}}%</div>
+  <svg *ngIf="drawing !== null" class="svg" xmlns="http://www.w3.org/2000/svg"
+      appSvgZoomPan (newScale)="newScale($event)" preserveAspectRatio="none"
+      [attr.width]="drawing.width" [attr.height]="drawing.height" >
+    <defs>
+      <!-- A marker to be used as an arrowhead -->
+      <marker
+        id="arrow"
+        viewBox="0 0 4 4"
+        refX="4"
+        refY="2"
+        markerWidth="4"
+        markerHeight="4"
+        orient="auto-start-reverse">
+        <path d="M 0 0 L 4 2 L 0 4 z" />
+      </marker>
+    </defs>
+    <g *ngFor="let rectangle of drawing.rectangles" (click)="handleShapeClicked(rectangle.id)">
+      <rect class="rectangle"
+        [attr.x]="rectangle.x"
+        [attr.y]="rectangle.y"
+        [attr.width]="rectangle.width"
+        [attr.height]="rectangle.height"
+        id="rectangle.id"
+        rx="5">
+      </rect>
+      <text
+        [attr.x]="rectangle.centerX"
+        [attr.y]="rectangle.centerY"
+        text-anchor="middle" dominant-baseline="middle" class="nodeText">
+        {{rectangle.text}}
+      </text>
+      <rect class="rect-hover-padding"
+        [attr.x]="rectangle.x - 5"
+        [attr.y]="rectangle.y - 5"
+        [attr.width]="rectangle.width + 10"
+        [attr.height]="rectangle.height + 10"
+        [class.selected]="rectangle.selected"
+        rx="10">
+      </rect>
+    </g>
+    <g *ngFor="let line of drawing.lines" (click)="handleShapeClicked(line.id)">
+      <polyline class="line"
+        attr.points="{{line.x1}},{{line.y1}} {{line.x2}},{{line.y2}}"
+        [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
+        id="{{line.id}}"
+        [class.selected]="line.selected"
+        [class.error]="line.isError"/>
+      <polyline class="line-hover-padding"
+        attr.points="{{line.x1}},{{line.y1}} {{line.x2}},{{line.y2}}"
+        [class.selected]="line.selected"/>
+    </g>
+  </svg>
+</div>
