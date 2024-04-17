@@ -94,10 +94,12 @@ export class PlacedEdge implements Edge {
   readonly line: Line
   readonly minLayerNumber: number
   readonly maxLayerNumber: number
+  readonly isLastSegment: boolean;
 
   constructor (private fromNode: PlacedNode, private toNode: PlacedNode, rawEdge: Edge, line: Line) {
     this.key = getEdgeKey(fromNode, toNode)
     const edge = rawEdge as EdgeForEditor
+    this.isLastSegment = edge.original.getTo().getId() === toNode.getId();
     this.creationReason = edge.creationReason
     const originalEdge = edge.original as ConcreteEdge
     this.optionalOriginalText = originalEdge.text === undefined ? null : originalEdge.text
