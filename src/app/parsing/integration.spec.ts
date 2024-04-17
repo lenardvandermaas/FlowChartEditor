@@ -52,15 +52,13 @@ X2 --> |success| X1
   // the number of crossing lines visually.
   it('Read Mermaid text and find 1 crossing line', () => {
     const flowChartEditor = new FlowChartEditorComponent()
-    flowChartEditor.layerNumberAlgorithm = LayerNumberAlgorithm.FIRST_OCCURING_PATH
-    const graphOrError = FlowChartEditorComponent.mermaid2graph(getTestMermaid())
+    const graphOrError = flowChartEditor.mermaid2graph(getTestMermaid())
     if (graphOrError.error !== null) {
       expect(true).toBeFalse()
       return
     }
     const graph = graphOrError.graph!
-    flowChartEditor.graph = graph
-    const modelOrError = flowChartEditor.graph2Model()
+    const modelOrError = flowChartEditor.graph2Model(graph, LayerNumberAlgorithm.FIRST_OCCURING_PATH)
     if (modelOrError.error !== null) {
       expect(true).toBeFalse()
       return
@@ -72,15 +70,13 @@ X2 --> |success| X1
 
   it('Adjust model of previous test to have no crossing lines anymore', () => {
     const flowChartEditor = new FlowChartEditorComponent()
-    flowChartEditor.layerNumberAlgorithm = LayerNumberAlgorithm.FIRST_OCCURING_PATH
-    const graphOrError = FlowChartEditorComponent.mermaid2graph(getTestMermaid())
+    const graphOrError = flowChartEditor.mermaid2graph(getTestMermaid())
     if (graphOrError.error !== null) {
       expect(true).toBeFalse()
       return
     }
     const graph = graphOrError.graph!
-    flowChartEditor.graph = graph
-    const modelOrError = flowChartEditor.graph2Model()
+    const modelOrError = flowChartEditor.graph2Model(graph, LayerNumberAlgorithm.FIRST_OCCURING_PATH)
     if (modelOrError.error !== null) {
       expect(true).toBeFalse()
       return
