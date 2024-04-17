@@ -170,7 +170,21 @@ function getIntermediateLayers(layerFrom: number, layerTo: number): number[] {
   return result
 }
 
-export function calculateLayerNumbers(graph: Graph): Map<string, number> {
+export enum LayerNumberAlgorithm {
+  FIRST_OCCURING_PATH = '0',
+  LONGEST_PATH = '1'
+}
+
+export function calculateLayerNumbers(graph: GraphConnectionsDecorator, algorithm: LayerNumberAlgorithm): Map<string, number> {
+  switch(algorithm) {
+    case LayerNumberAlgorithm.FIRST_OCCURING_PATH:
+      return calculateLayerNumbersFirstOccuringPath(graph);
+    case LayerNumberAlgorithm.LONGEST_PATH:
+      return calculateLayerNumbersLongestPath(graph);
+  }
+}
+
+export function calculateLayerNumbersFirstOccuringPath(graph: Graph): Map<string, number> {
   let layerMap: Map<string, number> = new Map()
   let queue: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n).length === 0)
   while (queue.length > 0) {
@@ -206,4 +220,24 @@ export function calculateLayerNumbers(graph: Graph): Map<string, number> {
       .forEach(node => queue.push(node));
   }
   return layerMap
+}
+
+export function calculateLayerNumbersLongestPath(graph: Graph): Map<string, number> {
+  let layerMap: Map<string, number> = new Map()
+  const startNodes: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n).length === 0);
+  const recursiveWalkThrough = (currentNode: Node, layerIndex: number, visitedNodes: string[]) => {
+    const currentNodeId: string = currentNode.getId();
+    const registeredLayer = layerMap.get(currentNodeId);
+    if (registeredLayer === undefined || registeredLayer < layerIndex) {
+      layerMap.set(currentNodeId, layerIndex);
+      const edgesFrom: readonly Edge[] = graph.getOrderedEdgesStartingFrom(currentNode);
+      const successors = edgesFrom.map(edge => edge.getTo());
+      const newVisitedNodes = [...visitedNodes, currentNodeId];
+      // Filter out nodes that have previously been visited in this path to prevent loops;
+      successors.filter(successor => !newVisitedNodes.includes(successor.getId())).forEach(successor => recursiveWalkThrough(successor, layerIndex + 1, newVisitedNodes))
+    }
+  }
+  startNodes.forEach(startNode => recursiveWalkThrough(startNode, 0, []));
+
+  return layerMap;
 }

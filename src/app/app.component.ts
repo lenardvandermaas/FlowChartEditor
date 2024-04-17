@@ -77,8 +77,6 @@ interface AppState {
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [FlowChartEditorComponent, CommonModule, RouterOutlet, FormsModule, ReactiveFormsModule, RxPush],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   providers: [RxState]
