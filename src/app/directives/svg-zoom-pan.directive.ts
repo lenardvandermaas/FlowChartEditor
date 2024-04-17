@@ -18,6 +18,7 @@ export class SvgZoomPanDirective {
 
   constructor(elementRef: ElementRef) {
     this.svg = elementRef.nativeElement
+    this.svg.classList.add('moveable');
 
     this.resize()
 
