@@ -5,8 +5,7 @@ import { SvgZoomPanDirective } from './svg-zoom-pan.directive';
 
 @Component({
   standalone: true,
-  template: `<svg [appSvgZoomPan]></svg>`,
-  imports: [SvgZoomPanDirective],
+  template: `<svg [appSvgZoomPan]></svg>`
 })
 class TestComponent {}
 
@@ -16,7 +15,8 @@ describe('SvgZoomPanDirective', () => {
 
   beforeEach(() => {
     fixture = TestBed.configureTestingModule({
-      imports: [SvgZoomPanDirective, TestComponent],
+      declarations: [SvgZoomPanDirective],
+      imports: [TestComponent],
     }).createComponent(TestComponent);
   
     fixture.detectChanges(); // initial binding
