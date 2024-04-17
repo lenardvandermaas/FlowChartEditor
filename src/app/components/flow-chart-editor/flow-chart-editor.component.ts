@@ -28,15 +28,13 @@ export interface GraphConnectionsDecoratorOrError {
 export class FlowChartEditorComponent {
   mermaidText: string = ''
   zoomInput: number = 100
-  graph: GraphConnectionsDecorator | null = null;
   layoutModel: NodeSequenceEditor | null = null
   selectionInModel: NodeOrEdgeSelection = new NodeOrEdgeSelection
   showNodeTextInDrawing: boolean = true
   choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
-  layerNumberAlgorithm: LayerNumberAlgorithm = LayerNumberAlgorithm.LONGEST_PATH;
   layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
-    {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'},
-    {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'}
+    {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'},
+    {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'}
   ];
 
   updateShowNodeTextInDrawing(): NodeCaptionChoice {
@@ -68,18 +66,17 @@ export class FlowChartEditorComponent {
     this.itemClickedSubject?.next(itemClicked)
   }
 
-  loadMermaid() {
-    const graphOrError: GraphConnectionsDecoratorOrError = FlowChartEditorComponent.mermaid2graph(this.mermaidText)
+  loadMermaid(algorithm: LayerNumberAlgorithm) {
+    const graphOrError: GraphConnectionsDecoratorOrError = this.mermaid2graph(this.mermaidText)
     if (graphOrError.error !== null) {
       alert(graphOrError.error)
       return
     }
-    this.graph = graphOrError.graph
-    this.loadGraph();
+    this.loadGraph(graphOrError.graph, algorithm);
   }
 
-  loadGraph() {
-    const modelOrError: NodeSequenceEditorOrError = this.graph2Model();
+  loadGraph(graph: GraphConnectionsDecorator|null, algorithm: LayerNumberAlgorithm) {
+    const modelOrError: NodeSequenceEditorOrError = this.graph2Model(graph, algorithm);
     if (modelOrError.error !== null) {
       alert(modelOrError.error)
       return
@@ -88,7 +85,7 @@ export class FlowChartEditorComponent {
     this.updateDrawing()
   }
 
-  static mermaid2graph(text: string): GraphConnectionsDecoratorOrError {
+  mermaid2graph(text: string): GraphConnectionsDecoratorOrError {
     let b: GraphBase
     try {
       b = getGraphFromMermaid(text)
@@ -98,12 +95,12 @@ export class FlowChartEditorComponent {
     return {graph: new GraphConnectionsDecorator(b), error: null}
   }
 
-  graph2Model(): NodeSequenceEditorOrError {
-    if (!this.graph) {
+  graph2Model(graph: GraphConnectionsDecorator|null, algorithm: LayerNumberAlgorithm): NodeSequenceEditorOrError {
+    if (!graph) {
       return {model: null, error: 'mermaid was not yet converted to graph when trying to load graph'}
     }
-    const layerMap: Map<string, number> = calculateLayerNumbers(this.graph, this.layerNumberAlgorithm)
-    const builder: NodeSequenceEditorBuilder = new NodeSequenceEditorBuilder(layerMap, this.graph)
+    const layerMap: Map<string, number> = calculateLayerNumbers(graph, algorithm)
+    const builder: NodeSequenceEditorBuilder = new NodeSequenceEditorBuilder(layerMap, graph)
     if (builder.orderedOmittedNodes.length > 0) {
       return {model: null, error: 'Could not assign a layer to the following nodes: ' + builder.orderedOmittedNodes.map(n => n.getId()).join(', ')}
     }
