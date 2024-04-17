@@ -1,21 +1,19 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { SvgZoomPanDirective } from '../../directives/svg-zoom-pan.directive';
 
 @Component({
   selector: 'app-frank-flowchart',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SvgZoomPanDirective],
   templateUrl: './frank-flowchart.component.html',
   styleUrl: './frank-flowchart.component.scss'
 })
 export class FrankFlowchartComponent {
-  @Input() zoom: number = 100
-  @Input() drawing: Drawing = getEmptyDrawing()
+  @Input() drawing: Drawing|null = null
   @Output() onShapeClicked: EventEmitter<string> = new EventEmitter()
 
-  calcZoom(coord: number): number {
-    return coord * this.zoom / 100
-  }
+  scale: string = '100';
 
   handleShapeClicked(id: string) {
     this.onShapeClicked.emit(id)
@@ -38,6 +36,10 @@ export class FrankFlowchartComponent {
       result.push("error")
     }
     return result
+  }
+
+  newScale(scale: number) {
+    this.scale = '' + Math.round(scale * 100);
   }
 }
 

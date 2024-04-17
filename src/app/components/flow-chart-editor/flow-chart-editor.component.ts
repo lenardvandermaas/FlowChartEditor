@@ -25,7 +25,6 @@ export interface NodeSequenceEditorOrError {
 })
 export class FlowChartEditorComponent {
   mermaidText: string = ''
-  zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
   selectionInModel: NodeOrEdgeSelection = new NodeOrEdgeSelection
   showNodeTextInDrawing: boolean = true
@@ -50,7 +49,7 @@ export class FlowChartEditorComponent {
   }
 
   dimensions = getFactoryDimensions()
-  drawing: Drawing = getEmptyDrawing()
+  drawing: Drawing|null = null
   numCrossingLines: number = 0
 
   // In the drawing
