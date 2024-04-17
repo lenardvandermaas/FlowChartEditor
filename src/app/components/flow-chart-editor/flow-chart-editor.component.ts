@@ -26,7 +26,7 @@ export interface GraphConnectionsDecoratorOrError {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FlowChartEditorComponent {
-  static readonly layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
+  readonly layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
     {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'},
     {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'}
   ];
