@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DimensionsEditorComponent } from './dimensions-editor.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('DimensionsEditorComponent', () => {
   let component: DimensionsEditorComponent;
@@ -8,7 +9,11 @@ describe('DimensionsEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DimensionsEditorComponent]
+      imports: [
+        FormsModule,
+        ReactiveFormsModule
+      ],
+      declarations: [DimensionsEditorComponent]
     })
     .compileComponents();
     

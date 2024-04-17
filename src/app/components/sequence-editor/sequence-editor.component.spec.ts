@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SequenceEditorComponent, View, BackgroundClass } from './sequence-editor.component';
-import { NodeSequenceEditor, ConcreteNodeSequenceEditor, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
+import { NodeSequenceEditor, ConcreteNodeSequenceEditor } from '../../model/nodeSequenceEditor';
 
-import { ConcreteGraphBase, GraphConnectionsDecorator, NodeCaptionChoice } from '../../model/graph';
+import { ConcreteGraphBase, GraphConnectionsDecorator } from '../../model/graph';
 import { Subject } from 'rxjs';
 
 describe('SequenceEditorComponent', () => {
@@ -12,7 +12,7 @@ describe('SequenceEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SequenceEditorComponent],
+      declarations: [SequenceEditorComponent]
     })
     .compileComponents();
     

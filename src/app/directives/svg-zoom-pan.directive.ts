@@ -1,8 +1,7 @@
 import { Directive, ElementRef, EventEmitter, Output } from '@angular/core';
 
 @Directive({
-  selector: '[appSvgZoomPan]',
-  standalone: true
+  selector: '[appSvgZoomPan]'
 })
 export class SvgZoomPanDirective {
 

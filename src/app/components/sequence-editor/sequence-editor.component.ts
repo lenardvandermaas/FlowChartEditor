@@ -1,17 +1,15 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop'
-import { CommonModule, NgFor } from '@angular/common'
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { CdkDragDrop } from '@angular/cdk/drag-drop'
 import { NodeSequenceEditor, NodeSequenceEditorCell, NodeOrEdgeSelection } from '../../model/nodeSequenceEditor';
 import { getRange } from '../../util/util';
-import { NodeCaptionChoice, NodeOrEdge, OptionalNode, getCaption } from '../../model/graph';
+import { NodeCaptionChoice, NodeOrEdge, getCaption } from '../../model/graph';
 import { Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sequence-editor',
-  standalone: true,
-  imports: [ DragDropModule, CommonModule, NgFor ],
   templateUrl: './sequence-editor.component.html',
-  styleUrl: './sequence-editor.component.scss'
+  styleUrl: './sequence-editor.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SequenceEditorComponent implements OnInit, OnDestroy {
   view: View = this.getEmptyView()

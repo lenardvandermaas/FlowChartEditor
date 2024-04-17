@@ -1,5 +1,5 @@
 import { ConcreteGraphBase, GraphConnectionsDecorator, getEdgeKey } from "../model/graph"
-import { NodeSequenceEditorBuilder, calculateLayerNumbers } from "../model/horizontalGrouping"
+import { NodeSequenceEditorBuilder, calculateLayerNumbersFirstOccuringPath } from "../model/horizontalGrouping"
 import { Layout, Dimensions, PlacedNode, PlacedEdge } from "./edge-layout"
 import { NodeLayoutBuilder } from "./node-layout"
 
@@ -16,7 +16,7 @@ describe('Layout', () => {
     b.connect(b.getNodeById('N2')!, b.getNodeById('End')!)
     b.connect(b.getNodeById('N1')!, b.getNodeById('N2')!)
     const g = new GraphConnectionsDecorator(b)
-    const m = calculateLayerNumbers(g)
+    const m = calculateLayerNumbersFirstOccuringPath(g)
     const builder = new NodeSequenceEditorBuilder(m, g)
     const model = builder.build()
     const nodeLayout = new NodeLayoutBuilder(model, dimensions).run()

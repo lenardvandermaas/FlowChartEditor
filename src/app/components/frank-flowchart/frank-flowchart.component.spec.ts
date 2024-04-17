@@ -8,7 +8,7 @@ describe('FrankFlowchartComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FrankFlowchartComponent]
+      declarations: [FrankFlowchartComponent]
     })
     .compileComponents();
     

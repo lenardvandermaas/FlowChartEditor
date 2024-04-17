@@ -1,6 +1,6 @@
 import { getGraphFromMermaid } from './mermaid-parser';
 import { GraphBase, Graph, GraphConnectionsDecorator } from '../model/graph'
-import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason } from '../model/horizontalGrouping';
+import { calculateLayerNumbers, NodeSequenceEditorBuilder, NodeForEditor, CreationReason, calculateLayerNumbersFirstOccuringPath, LayerNumberAlgorithm } from '../model/horizontalGrouping';
 import { NodeSequenceEditor } from '../model/nodeSequenceEditor';
 import { FlowChartEditorComponent } from '../components/flow-chart-editor/flow-chart-editor.component';
 import { Dimensions } from '../graphics/edge-layout';
@@ -26,7 +26,7 @@ X2 --> |success| X1
     // For each node, summarize incoming and outgoing edges
     const g: Graph = new GraphConnectionsDecorator(b)
     // Calculate the layer numbers
-    const nodeIdToLayer: Map<string, number> = calculateLayerNumbers(g)
+    const nodeIdToLayer: Map<string, number> = calculateLayerNumbersFirstOccuringPath(g)
     // Create intermediate nodes and wrap existing nodes and edges
     // into new nodes and edges. These provide the CreationReason,
     // whether they are intermediate or original.
@@ -51,9 +51,17 @@ X2 --> |success| X1
   // Test was created by feeding the mermaid text to the GUI and checking
   // the number of crossing lines visually.
   it('Read Mermaid text and find 1 crossing line', () => {
-    const modelOrError = FlowChartEditorComponent.mermaid2model(getTestMermaid())
+    const flowChartEditor = new FlowChartEditorComponent()
+    const graphOrError = flowChartEditor.mermaid2graph(getTestMermaid())
+    if (graphOrError.error !== null) {
+      expect(true).toBeFalse()
+      return
+    }
+    const graph = graphOrError.graph!
+    const modelOrError = flowChartEditor.graph2Model(graph, LayerNumberAlgorithm.FIRST_OCCURING_PATH)
     if (modelOrError.error !== null) {
-      throw new Error(modelOrError.error)
+      expect(true).toBeFalse()
+      return
     }
     const model = modelOrError.model!
     expect(model.getSequence().map(n => n?.getId())).toEqual(['Start', 'N1', 'intermediate1', 'N2', 'intermediate2', 'End'])
@@ -61,9 +69,17 @@ X2 --> |success| X1
   })
 
   it('Adjust model of previous test to have no crossing lines anymore', () => {
-    const modelOrError = FlowChartEditorComponent.mermaid2model(getTestMermaid())
+    const flowChartEditor = new FlowChartEditorComponent()
+    const graphOrError = flowChartEditor.mermaid2graph(getTestMermaid())
+    if (graphOrError.error !== null) {
+      expect(true).toBeFalse()
+      return
+    }
+    const graph = graphOrError.graph!
+    const modelOrError = flowChartEditor.graph2Model(graph, LayerNumberAlgorithm.FIRST_OCCURING_PATH)
     if (modelOrError.error !== null) {
-      throw new Error(modelOrError.error)
+      expect(true).toBeFalse()
+      return
     }
     const model = modelOrError.model!
     model.rotateToSwap(2, 1)

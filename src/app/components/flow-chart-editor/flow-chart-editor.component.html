@@ -12,7 +12,7 @@ version.
       <textarea [(ngModel)]="mermaidText"></textarea>
     </td>
     <td>
-      <button (click)="loadMermaid()">Load</button>
+      <button class="loadButton" *ngFor="let alg of layerNumberAlgorithms" (click)="loadMermaid(alg.key)">Load with {{alg.value}} algorithm</button>
     </td>
     <td>
       <table id="values">

@@ -1,13 +1,11 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { SvgZoomPanDirective } from '../../directives/svg-zoom-pan.directive';
+
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-frank-flowchart',
-  standalone: true,
-  imports: [CommonModule, SvgZoomPanDirective],
   templateUrl: './frank-flowchart.component.html',
-  styleUrl: './frank-flowchart.component.scss'
+  styleUrl: './frank-flowchart.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FrankFlowchartComponent {
   @Input() drawing: Drawing|null = null
