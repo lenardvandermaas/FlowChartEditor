@@ -31,7 +31,7 @@ export class SvgZoomPanDirective {
     })
 
     this.svg.addEventListener('mousedown', (e: MouseEvent) => {
-      if (e.button === 0) {
+      if (e.button === 0 && e.target === this.svg) {
         this.isPanning = true
         this.startPoint = {x:e.x,y:e.y}
       }

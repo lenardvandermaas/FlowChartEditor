@@ -22,6 +22,11 @@ svg {
   stroke-width: 3;
 }
 
+g {
+  pointer-events: all;
+  cursor: pointer;
+}
+
 .line {
   stroke: black;
   stroke-width: 3;
