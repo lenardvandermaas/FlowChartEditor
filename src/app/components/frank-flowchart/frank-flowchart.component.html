@@ -13,15 +13,14 @@
       <path d="M 0 0 L 4 2 L 0 4 z" />
     </marker>
   </defs>
-  <g *ngFor="let rectangle of drawing.rectangles">
-    <rect
+  <g *ngFor="let rectangle of drawing.rectangles" (click)="handleShapeClicked(rectangle.id)">
+    <rect class="rectangle"
       [attr.x]="calcZoom(rectangle.x)"
       [attr.y]="calcZoom(rectangle.y)"
       [attr.width]="calcZoom(rectangle.width)"
       [attr.height]="calcZoom(rectangle.height)"
       id="rectangle.id"
-      [ngClass]="getRectangleClass(rectangle)"
-      (click)="handleShapeClicked(rectangle.id)">
+      rx="5">
     </rect>
     <text
       [attr.x]="calcZoom(rectangle.centerX)"
@@ -29,11 +28,24 @@
       text-anchor="middle" dominant-baseline="middle" class="nodeText">
       {{rectangle.text}}
     </text>
+    <rect class="rect-hover-padding"
+      [attr.x]="calcZoom(rectangle.x - 5)"
+      [attr.y]="calcZoom(rectangle.y - 5)"
+      [attr.width]="calcZoom(rectangle.width + 10)"
+      [attr.height]="calcZoom(rectangle.height + 10)"
+      [class.selected]="rectangle.selected"
+      rx="10">
+    </rect>
   </g>
-  <polyline *ngFor="let line of drawing.lines"
-    attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
-    [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
-    id="line.id"
-    [ngClass]="getLineClass(line)"
-    (click)="handleShapeClicked(line.id)"/>
+  <g *ngFor="let line of drawing.lines" (click)="handleShapeClicked(line.id)">
+    <polyline class="line"
+      attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
+      [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
+      id="{{line.id}}"
+      [class.selected]="line.selected"
+      [class.error]="line.isError"/>
+    <polyline class="line-hover-padding"
+      attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
+      [class.selected]="line.selected"/>
+  </g>
 </svg>
