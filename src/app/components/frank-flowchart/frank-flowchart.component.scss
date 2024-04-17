@@ -22,37 +22,49 @@ svg {
   stroke-width: 3;
 }
 
-g {
-  pointer-events: all;
-  cursor: pointer;
-}
-
 .line {
   stroke: black;
   stroke-width: 3;
-}
-
-.rectangle.selected {
-  stroke: blue;
-}
-
-.line.selected {
-  stroke: blue;
 }
 
 .line.error {
   stroke: red
 }
 
-.line.error.selected {
-  stroke: purple
+g {
+  pointer-events: all;
+  cursor: pointer;
+
+  &:hover {
+
+    > .rect-hover-padding {
+      opacity: 0.5;
+    }
+
+    > .line-hover-padding {
+      stroke-opacity: 0.5;
+    }
+  }
 }
 
-.rectangle:hover {
-  stroke-width: 10;
+.line-hover-padding {
+  stroke: #eee;
+  stroke-opacity: 0;
+  stroke-width: 13;
+
+  &.selected {
+    stroke: #bbf;
+    stroke-opacity: 0.3;
+  }
 }
 
-.line:hover {
-  stroke-width: 10;
-}
+.rect-hover-padding {
+  fill: #fff;
+  opacity: 0;
+  stroke: none;
 
+  &.selected {
+    fill: #bbf;
+    opacity: 0.3;
+  }
+}
