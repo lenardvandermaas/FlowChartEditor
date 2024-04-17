@@ -10,6 +10,7 @@ import { RxPush } from "@rx-angular/template/push";
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { RouterModule } from "@angular/router";
 import { routes } from "./app.routes";
+import { SvgZoomPanDirective } from './directives/svg-zoom-pan.directive'
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { routes } from "./app.routes";
     DimensionsEditorComponent,
     FlowChartEditorComponent,
     FrankFlowchartComponent,
-    SequenceEditorComponent
+    SequenceEditorComponent,
+    SvgZoomPanDirective
   ],
   imports: [
     BrowserModule,

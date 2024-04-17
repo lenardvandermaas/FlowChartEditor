@@ -88,5 +88,7 @@ button:active {
 
 #drawing-area {
   resize: both;
-  overflow: auto
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
 }

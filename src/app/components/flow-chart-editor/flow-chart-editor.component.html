@@ -40,21 +40,12 @@ version.
     <td id="drawing">
       <table id="above-drawing">
         <tr>
-          <td><h2>Layout</h2></td>
-          <td>
-            <div id="slider-container">
-              <input type="range" min="25" max="200" class="slider" [(ngModel)]="zoomInput">
-            </div>
-          </td>
-          <td>
-            <div id="zoomPerc">{{ zoomInput + "%" }}</div>
-          </td>
           <td id="labelShowNodeText">Show node text: </td>
           <td><input type="checkbox" [checked]="showNodeTextInDrawing" (click)="newChoiceShowNodeText()"/></td>
         </tr>
       </table>
       <div id="drawing-area" class="boundary">
-        <app-frank-flowchart id="frankFlowChart" [zoom]="zoomInput" [drawing]="drawing" (onShapeClicked)="onItemClicked($event)"></app-frank-flowchart>
+        <app-frank-flowchart id="frankFlowChart" [drawing]="drawing" (onShapeClicked)="onItemClicked($event)"></app-frank-flowchart>
       </div>
     </td>
   </tr>
