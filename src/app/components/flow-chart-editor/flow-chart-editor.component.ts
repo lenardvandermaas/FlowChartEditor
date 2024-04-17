@@ -26,16 +26,17 @@ export interface GraphConnectionsDecoratorOrError {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FlowChartEditorComponent {
+  static readonly layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
+    {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'},
+    {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'}
+  ];
+
   mermaidText: string = ''
   zoomInput: number = 100
   layoutModel: NodeSequenceEditor | null = null
   selectionInModel: NodeOrEdgeSelection = new NodeOrEdgeSelection
   showNodeTextInDrawing: boolean = true
   choiceShowNodeTextInDrawing: NodeCaptionChoice = this.updateShowNodeTextInDrawing()
-  layerNumberAlgorithms: {key: LayerNumberAlgorithm, value: string}[] = [
-    {key: LayerNumberAlgorithm.FIRST_OCCURING_PATH, value: 'first occuring path'},
-    {key: LayerNumberAlgorithm.LONGEST_PATH, value: 'longest path'}
-  ];
 
   updateShowNodeTextInDrawing(): NodeCaptionChoice {
     if (this.showNodeTextInDrawing) {
