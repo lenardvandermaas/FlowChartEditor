@@ -32,7 +32,7 @@
   </g>
   <polyline *ngFor="let line of drawing.lines"
     attr.points="{{calcZoom(line.x1)}},{{calcZoom(line.y1)}} {{calcZoom(line.x2)}},{{calcZoom(line.y2)}}"
-    marker-end="url(#arrow)"
+    [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
     id="line.id"
     [ngClass]="getLineClass(line)"
     (click)="handleShapeClicked(line.id)"/>

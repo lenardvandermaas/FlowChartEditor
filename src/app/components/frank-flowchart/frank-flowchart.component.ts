@@ -64,6 +64,7 @@ export interface Line {
   x2: number
   y2: number
   selected: boolean
+  arrow: boolean
 }
 
 export function getEmptyDrawing(): Drawing {
