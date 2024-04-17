@@ -17,25 +17,6 @@ export class FrankFlowchartComponent {
     this.onShapeClicked.emit(id)
   }
 
-  getRectangleClass(rectangle: Rectangle): string[] {
-    const result = ["rectangle"]
-    if (rectangle.selected) {
-      result.push("selected")
-    }
-    return result
-  }
-
-  getLineClass(line: Line): string[] {
-    const result = ["line"]
-    if (line.selected) {
-      result.push("selected")
-    }
-    if (line.isError) {
-      result.push("error")
-    }
-    return result
-  }
-
   newScale(scale: number) {
     this.scale = '' + Math.round(scale * 100);
   }

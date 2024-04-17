@@ -45,7 +45,6 @@
         attr.points="{{line.x1}},{{line.y1}} {{line.x2}},{{line.y2}}"
         [attr.marker-end]="line.arrow ? 'url(#arrow)' : null"
         id="{{line.id}}"
-        [class.selected]="line.selected"
         [class.error]="line.isError"/>
       <polyline class="line-hover-padding"
         attr.points="{{line.x1}},{{line.y1}} {{line.x2}},{{line.y2}}"
