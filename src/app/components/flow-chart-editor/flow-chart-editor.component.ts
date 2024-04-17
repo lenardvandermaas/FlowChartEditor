@@ -112,7 +112,8 @@ export class FlowChartEditorComponent {
         id: edge.key, x1: edge.line.startPoint.x, y1: edge.line.startPoint.y,
         x2: edge.line.endPoint.x, y2: edge.line.endPoint.y,
         selected: this.selectionInModel.isEdgeHighlightedInDrawing(edge.getKey(), this.layoutModel!),
-        arrow: edge.isLastSegment
+        arrow: edge.isLastSegment,
+        isError: edge.optionalOriginalText === 'error'
       }})
     this.drawing = {width: layout.width, height: layout.height, rectangles, lines}
   }
