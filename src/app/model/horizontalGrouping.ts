@@ -227,7 +227,6 @@ export function calculateLayerNumbersLongestPath(graph: Graph): Map<string, numb
   const startNodes: Node[] = graph.getNodes().filter(n => graph.getOrderedEdgesLeadingTo(n).length === 0);
   const recursiveWalkThrough = (currentNode: Node, layerIndex: number, visitedNodes: string[]) => {
     const currentNodeId: string = currentNode.getId();
-    // if (visitedNodes.includes(currentNodeId)) return;
     const registeredLayer = layerMap.get(currentNodeId);
     if (registeredLayer === undefined || registeredLayer < layerIndex) {
       layerMap.set(currentNodeId, layerIndex);
