@@ -33,24 +33,26 @@ export class SvgZoomPanDirective {
     this.svg.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button === 0 && e.target === this.svg) {
         this.isPanning = true
-        this.startPoint = {x:e.x,y:e.y}
+        this.startPoint = {x:e.pageX,y:e.pageY}
+        document.body.classList.add('prevent-selection')
       }
     })
 
-    this.svg.addEventListener('mousemove', (e: MouseEvent) => {
+    document.addEventListener('mousemove', (e: MouseEvent) => {
       if (this.isPanning) this.pan(e)
     })
 
-    this.svg.addEventListener('mouseup', (e: MouseEvent) => {
+    document.addEventListener('mouseup', (e: MouseEvent) => {
       if (this.isPanning && e.button === 0) {
         this.viewBox = this.pan(e)
         this.isPanning = false
+        document.body.classList.remove('prevent-selection')
       }
     })
   }
 
   scale(mx: number, my: number, direction: number) {
-    this.setScaleFactor(this.scaleFactor + direction * 0.3)
+    this.setScaleFactor(this.scaleFactor + direction * 0.4)
     // viewBox size delta
     const dw = this.viewBox.w - this.svgSize.w * this.zoom
     const dh = this.viewBox.h - this.svgSize.h * this.zoom
@@ -85,7 +87,7 @@ export class SvgZoomPanDirective {
   }
 
   pan(e: MouseEvent): {x: number, y: number, w: number, h: number} {
-    this.endPoint = {x:e.x,y:e.y}
+    this.endPoint = {x:e.pageX,y:e.pageY}
     // viewBox offset delta
     const dx = (this.startPoint.x - this.endPoint.x)*this.zoom
     const dy = (this.startPoint.y - this.endPoint.y)*this.zoom
